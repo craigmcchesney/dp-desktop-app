@@ -2,6 +2,7 @@ package com.ospreydcs.dp.gui;
 
 import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.layout.StackPane;
@@ -114,6 +115,7 @@ public class MainController implements Initializable {
     @FXML
     private void onGenerate() {
         viewModel.handleGenerate();
+        switchToView("/fxml/data-generation.fxml");
     }
 
     @FXML
@@ -173,11 +175,51 @@ public class MainController implements Initializable {
         viewModel.handleConsole();
     }
 
-    // Utility methods for future view management
+    // Utility methods for view management
     public void switchToView(String fxmlPath) {
-        // Future implementation for switching between different views
-        // This will load different FXML files into the contentPane
-        logger.debug("View switch requested to: {}", fxmlPath);
-        viewModel.updateStatus("Switching view...");
+        try {
+            logger.debug("Loading view: {}", fxmlPath);
+            viewModel.updateStatus("Loading view...");
+            
+            // Load the new FXML
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
+            contentPane.getChildren().clear();
+            contentPane.getChildren().add(loader.load());
+            
+            // Inject dependencies into the new controller if it needs them
+            Object controller = loader.getController();
+            if (controller instanceof DataGenerationController) {
+                DataGenerationController dgController = (DataGenerationController) controller;
+                dgController.setDpApplication(dpApplication);
+                dgController.setPrimaryStage(primaryStage);
+                dgController.setMainController(this);
+            }
+            
+            viewModel.updateStatus("View loaded successfully");
+            logger.debug("Successfully loaded view: {}", fxmlPath);
+            
+        } catch (Exception e) {
+            logger.error("Failed to load view: {}", fxmlPath, e);
+            viewModel.updateStatus("Failed to load view: " + e.getMessage());
+        }
+    }
+    
+    public void switchToMainView() {
+        try {
+            logger.debug("Returning to main view");
+            viewModel.updateStatus("Loading main view...");
+            
+            // Load the welcome content back into the content pane
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/welcome-content.fxml"));
+            contentPane.getChildren().clear();
+            contentPane.getChildren().add(loader.load());
+            
+            viewModel.updateStatus("Ready");
+            logger.debug("Successfully returned to main view");
+            
+        } catch (Exception e) {
+            logger.error("Failed to return to main view", e);
+            viewModel.updateStatus("Error returning to main view");
+        }
     }
 }

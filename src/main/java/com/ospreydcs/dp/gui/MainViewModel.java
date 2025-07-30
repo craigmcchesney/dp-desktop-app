@@ -19,7 +19,7 @@ public class MainViewModel {
     // Menu item enabled states
     private final BooleanProperty connectionEnabled = new SimpleBooleanProperty(false);
     private final BooleanProperty preferencesEnabled = new SimpleBooleanProperty(false);
-    private final BooleanProperty generateEnabled = new SimpleBooleanProperty(false);
+    private final BooleanProperty generateEnabled = new SimpleBooleanProperty(true);
     private final BooleanProperty fixedEnabled = new SimpleBooleanProperty(false);
     private final BooleanProperty importEnabled = new SimpleBooleanProperty(false);
     private final BooleanProperty subscribeEnabled = new SimpleBooleanProperty(false);

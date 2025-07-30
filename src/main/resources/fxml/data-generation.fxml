@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ospreydcs.dp.gui.DataGenerationController" styleClass="content-pane">
+   <top>
+      <VBox styleClass="view-container">
+         <Label styleClass="section-header" text="Generate Time-Series Data" />
+         <Label styleClass="app-description" text="Configure provider details, request parameters, and process variables to generate sample data for ingestion." />
+      </VBox>
+   </top>
+   
+   <center>
+      <ScrollPane fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED">
+         <VBox spacing="20" styleClass="view-container">
+            
+            <!-- Provider Details Section -->
+            <VBox styleClass="form-container">
+               <Label styleClass="section-header" text="Provider Details" />
+               <GridPane hgap="10" vgap="10">
+                  <columnConstraints>
+                     <ColumnConstraints minWidth="120" prefWidth="120" />
+                     <ColumnConstraints hgrow="ALWAYS" />
+                  </columnConstraints>
+                  
+                  <Label text="Name:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                  <TextField fx:id="providerNameField" promptText="Provider name" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                  
+                  <Label text="Description:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                  <TextArea fx:id="providerDescriptionArea" prefRowCount="2" promptText="Provider description" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                  
+                  <Label text="Tags:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                  <VBox spacing="5" GridPane.columnIndex="1" GridPane.rowIndex="2">
+                     <HBox spacing="10">
+                        <ComboBox fx:id="providerTagsCombo" promptText="Select tags" />
+                        <Button fx:id="addProviderTagButton" onAction="#onAddProviderTag" text="Add Tag" />
+                     </HBox>
+                     <ListView fx:id="providerTagsList" maxHeight="80" minHeight="60" />
+                  </VBox>
+                  
+                  <Label text="Attributes:" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+                  <VBox spacing="5" GridPane.columnIndex="1" GridPane.rowIndex="3">
+                     <HBox spacing="10">
+                        <ComboBox fx:id="providerAttributeKeyCombo" onAction="#onProviderAttributeKeyChanged" promptText="Select key" />
+                        <ComboBox fx:id="providerAttributeValueCombo" promptText="Select value" />
+                        <Button fx:id="addProviderAttributeButton" onAction="#onAddProviderAttribute" text="Add Attribute" />
+                     </HBox>
+                     <ListView fx:id="providerAttributesList" maxHeight="80" minHeight="60" />
+                  </VBox>
+               </GridPane>
+            </VBox>
+            
+            <!-- Request Details Section -->
+            <VBox styleClass="form-container">
+               <Label styleClass="section-header" text="Request Details" />
+               <GridPane hgap="10" vgap="10">
+                  <columnConstraints>
+                     <ColumnConstraints minWidth="120" prefWidth="120" />
+                     <ColumnConstraints hgrow="ALWAYS" />
+                  </columnConstraints>
+                  
+                  <Label text="Data Begin Time:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                  <DatePicker fx:id="dataBeginDatePicker" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                  
+                  <Label text="Begin Time:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                  <HBox spacing="5" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                     <Spinner fx:id="beginHourSpinner" editable="true" prefWidth="80">
+                        <valueFactory>
+                           <SpinnerValueFactory.IntegerSpinnerValueFactory max="23" min="0" />
+                        </valueFactory>
+                     </Spinner>
+                     <Label text=":" />
+                     <Spinner fx:id="beginMinuteSpinner" editable="true" prefWidth="80">
+                        <valueFactory>
+                           <SpinnerValueFactory.IntegerSpinnerValueFactory max="59" min="0" />
+                        </valueFactory>
+                     </Spinner>
+                     <Label text=":" />
+                     <Spinner fx:id="beginSecondSpinner" editable="true" prefWidth="80">
+                        <valueFactory>
+                           <SpinnerValueFactory.IntegerSpinnerValueFactory max="59" min="0" />
+                        </valueFactory>
+                     </Spinner>
+                  </HBox>
+                  
+                  <Label text="Data End Time:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                  <DatePicker fx:id="dataEndDatePicker" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                  
+                  <Label text="End Time:" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+                  <HBox spacing="5" GridPane.columnIndex="1" GridPane.rowIndex="3">
+                     <Spinner fx:id="endHourSpinner" editable="true" prefWidth="80">
+                        <valueFactory>
+                           <SpinnerValueFactory.IntegerSpinnerValueFactory max="23" min="0" />
+                        </valueFactory>
+                     </Spinner>
+                     <Label text=":" />
+                     <Spinner fx:id="endMinuteSpinner" editable="true" prefWidth="80">
+                        <valueFactory>
+                           <SpinnerValueFactory.IntegerSpinnerValueFactory max="59" min="0" />
+                        </valueFactory>
+                     </Spinner>
+                     <Label text=":" />
+                     <Spinner fx:id="endSecondSpinner" editable="true" prefWidth="80">
+                        <valueFactory>
+                           <SpinnerValueFactory.IntegerSpinnerValueFactory max="59" min="0" />
+                        </valueFactory>
+                     </Spinner>
+                  </HBox>
+                  
+                  <Label text="Tags:" GridPane.columnIndex="0" GridPane.rowIndex="4" />
+                  <VBox spacing="5" GridPane.columnIndex="1" GridPane.rowIndex="4">
+                     <HBox spacing="10">
+                        <ComboBox fx:id="requestTagsCombo" promptText="Select tags" />
+                        <Button fx:id="addRequestTagButton" onAction="#onAddRequestTag" text="Add Tag" />
+                     </HBox>
+                     <ListView fx:id="requestTagsList" maxHeight="80" minHeight="60" />
+                  </VBox>
+                  
+                  <Label text="Attributes:" GridPane.columnIndex="0" GridPane.rowIndex="5" />
+                  <VBox spacing="5" GridPane.columnIndex="1" GridPane.rowIndex="5">
+                     <HBox spacing="10">
+                        <ComboBox fx:id="requestAttributeKeyCombo" onAction="#onRequestAttributeKeyChanged" promptText="Select key" />
+                        <ComboBox fx:id="requestAttributeValueCombo" promptText="Select value" />
+                        <Button fx:id="addRequestAttributeButton" onAction="#onAddRequestAttribute" text="Add Attribute" />
+                     </HBox>
+                     <ListView fx:id="requestAttributesList" maxHeight="80" minHeight="60" />
+                  </VBox>
+                  
+                  <Label text="Event Name:" GridPane.columnIndex="0" GridPane.rowIndex="6" />
+                  <ComboBox fx:id="eventNameCombo" promptText="Select event" GridPane.columnIndex="1" GridPane.rowIndex="6" />
+               </GridPane>
+            </VBox>
+            
+            <!-- PV Details Section -->
+            <VBox styleClass="form-container">
+               <HBox alignment="CENTER_LEFT" spacing="10">
+                  <Label styleClass="section-header" text="Process Variables (PVs)" />
+                  <Button fx:id="addPvButton" onAction="#onAddPv" styleClass="btn-primary" text="Add PV" />
+               </HBox>
+               
+               <ListView fx:id="pvDetailsList" minHeight="150" />
+               
+               <!-- PV Detail Entry Panel (initially hidden) -->
+               <VBox fx:id="pvDetailEntryPanel" spacing="10" styleClass="form-container" visible="false">
+                  <Label styleClass="section-header" text="Add Process Variable" />
+                  <GridPane hgap="10" vgap="10">
+                     <columnConstraints>
+                        <ColumnConstraints minWidth="120" prefWidth="120" />
+                        <ColumnConstraints hgrow="ALWAYS" />
+                     </columnConstraints>
+                     
+                     <Label text="PV Name:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                     <TextField fx:id="pvNameField" promptText="Process variable name" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                     
+                     <Label text="Data Type:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                     <ComboBox fx:id="pvDataTypeCombo" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                     
+                     <Label text="Sample Period (ms):" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                     <Spinner fx:id="pvSamplePeriodSpinner" editable="true" GridPane.columnIndex="1" GridPane.rowIndex="2">
+                        <valueFactory>
+                           <SpinnerValueFactory.IntegerSpinnerValueFactory initialValue="1000" max="3600000" min="1" />
+                        </valueFactory>
+                     </Spinner>
+                     
+                     <Label text="Initial Value:" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+                     <TextField fx:id="pvInitialValueField" promptText="Initial value" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                     
+                     <Label text="Max Step Magnitude:" GridPane.columnIndex="0" GridPane.rowIndex="4" />
+                     <TextField fx:id="pvMaxStepField" promptText="Maximum step size" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+                  </GridPane>
+                  
+                  <HBox spacing="10">
+                     <Button fx:id="addPvDetailButton" onAction="#onAddPvDetail" styleClass="btn-success" text="Add" />
+                     <Button fx:id="cancelPvDetailButton" onAction="#onCancelPvDetail" styleClass="btn-secondary" text="Cancel" />
+                  </HBox>
+               </VBox>
+            </VBox>
+         </VBox>
+      </ScrollPane>
+   </center>
+   
+   <bottom>
+      <HBox alignment="CENTER_RIGHT" spacing="10" styleClass="status-bar">
+         <Button fx:id="generateButton" onAction="#onGenerate" styleClass="btn-primary" text="Generate" />
+         <Button fx:id="cancelButton" onAction="#onCancel" styleClass="btn-secondary" text="Cancel" />
+      </HBox>
+   </bottom>
+</BorderPane>
