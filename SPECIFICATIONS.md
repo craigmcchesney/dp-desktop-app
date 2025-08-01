@@ -139,7 +139,16 @@ Development of the demo GUI application will proceed according to the following 
 
 5.1.3 The PV Details section includes a list of PvDetail items with options for adding and removing items from the list.  When the user selects the option for adding a new PvDetail, a panel is displayed for entering 1) PV name (brief string), 2) Data Type (menu of string choices including "integer", "float"), 3) Sample Period in milliseconds, 4) Initial Value (integer or float), and 5) Max Step Magnitude (interger or float value indicating the maximum step size if generating the values using a random walk algo).  The panel for capturing each PV details includes buttons "Add" and "Cancel".  If the user clicks "Add", a PvDetail object containing details entered by the user in the panel is added to the PvDetail list.
 
-5.2 (Additional details to be provided after the GUI specified in section 5.1 is generated) The application will invoke the registerProvider() API method to register the specified provider name, and the ingestData() API method for uploading the generated data.
+5.2 Add handling for the "Generate" button in the data-generation view. This consists of implementing the DataGenerationViewModel.generateData():237 method to 1) validate that all required form data is provided, 2) call the DpApplication.registerProvider() method with form provider data (described in section 5.2.2), and 3) call DpApplication.generateData() with form request and PV data (described in section 5.2.3).
+
+5.2.1 Validate that all required form values are provided.
+5.2.1.1 Provider Details section required fields: Name.
+5.2.1.2 Request Details section required fields: Data Begin Time, Data End Time.
+5.2.1.3 PV Details required fields in form for creating new PvDetail: Name, Data Type, Sample Period, Initial Value, Max Step Magnitude
+
+5.2.2 The form's "Provider Details" section includes fields for name, description, tags, and attributes.  Use those values to call DpApplication.registerProvider() which will generate a RegisterProviderRequestParams object and invoke IngestionClient.sendRegisterProvider().  Save the providerId returned by the API call in a new DpApplication member variable for use in calling ingestData().
+
+5.2.3 Invoke DpApplication.generateAndIngestData() with form data from the Request Details and PV Details section.  From the Request Details section, that includes beginTime, endTime, tags, and attributes.  From the PV Details section, that includes the list of PvDetail objects.  The generateAndIngestData() method will iterate through the PvDetail objects, generating random data values using a "random walk" scheme, and creating and sending IngestDataRequest objects via IngestionClient.sendIngestData() for each PV in the list.
 
 6. Add simple PV time-series data query mechanism with results displayed in tabular format.  Provides GUI elements for specifying query criteria including list of PV names or PV name pattern, begin time, end time, and page size (in nanoseconds) for breaking the overall query time range into pages suitable for calls to queryTable() API method, and paging through the query results.  Query results are displayed in tabular format.
 
