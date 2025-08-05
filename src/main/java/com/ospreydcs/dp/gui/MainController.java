@@ -46,6 +46,7 @@ public class MainController implements Initializable {
     private MainViewModel viewModel;
     private DpApplication dpApplication;
     private Stage primaryStage;
+    private HomeController homeController;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -56,6 +57,8 @@ public class MainController implements Initializable {
         
         // Bind UI components to view model properties
         bindUIToViewModel();
+        
+        // Note: Don't load home view here - wait until dpApplication is injected
         
         logger.debug("MainController initialized successfully");
     }
@@ -88,6 +91,10 @@ public class MainController implements Initializable {
         if (viewModel != null) {
             viewModel.setDpApplication(dpApplication);
         }
+        
+        // Now that dpApplication is available, load the home view
+        loadHomeView();
+        
         logger.debug("DpApplication injected into MainController");
     }
 
@@ -210,22 +217,70 @@ public class MainController implements Initializable {
         }
     }
     
-    public void switchToMainView() {
+    private void loadHomeView() {
         try {
-            logger.debug("Returning to main view");
-            viewModel.updateStatus("Loading main view...");
+            logger.debug("Loading home view");
             
-            // Load the welcome content back into the content pane
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/welcome-content.fxml"));
+            // Load the home FXML
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/home.fxml"));
             contentPane.getChildren().clear();
             contentPane.getChildren().add(loader.load());
             
-            viewModel.updateStatus("Ready");
-            logger.debug("Successfully returned to main view");
+            // Get the home controller and inject dependencies
+            homeController = loader.getController();
+            homeController.setDpApplication(dpApplication);
+            
+            // Refresh home view with current application state
+            refreshHomeView();
+            
+            logger.debug("Successfully loaded home view");
             
         } catch (Exception e) {
-            logger.error("Failed to return to main view", e);
-            viewModel.updateStatus("Error returning to main view");
+            logger.error("Failed to load home view", e);
+            viewModel.updateStatus("Error loading home view");
+        }
+    }
+    
+    public void switchToMainView() {
+        try {
+            logger.debug("Returning to home view");
+            viewModel.updateStatus("Loading home view...");
+            
+            loadHomeView();
+            
+            viewModel.updateStatus("Ready");
+            logger.debug("Successfully returned to home view");
+            
+        } catch (Exception e) {
+            logger.error("Failed to return to home view", e);
+            viewModel.updateStatus("Error returning to home view");
+        }
+    }
+    
+    private void refreshHomeView() {
+        if (homeController != null && dpApplication != null) {
+            // Update home view with current application state
+            HomeViewModel homeViewModel = homeController.getViewModel();
+            homeViewModel.updateDataIngestedState(dpApplication.hasIngestedData());
+            homeViewModel.updateQueriesPerformedState(dpApplication.hasPerformedQueries());
+            if (dpApplication.getLastOperationResult() != null) {
+                homeViewModel.updateLastOperationResult(dpApplication.getLastOperationResult());
+            }
+            logger.debug("Home view refreshed with current application state");
+        }
+    }
+    
+    public void onDataGenerationSuccess(String message) {
+        if (homeController != null) {
+            homeController.onDataGenerationSuccess(message);
+            logger.info("Home view notified of data generation success: {}", message);
+        }
+    }
+    
+    public void onQuerySuccess(String message) {
+        if (homeController != null) {
+            homeController.onQuerySuccess(message);
+            logger.info("Home view notified of query success: {}", message);
         }
     }
 }

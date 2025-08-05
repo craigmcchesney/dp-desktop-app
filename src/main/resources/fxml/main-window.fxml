@@ -45,16 +45,7 @@
    </top>
    <center>
       <StackPane fx:id="contentPane" styleClass="container-fluid">
-         <VBox alignment="CENTER" spacing="20" styleClass="jumbotron">
-            <padding>
-               <Insets bottom="40.0" left="40.0" right="40.0" top="40.0" />
-            </padding>
-            <Label styleClass="h1" text="Data Platform Desktop Application" />
-            <Label styleClass="lead" text="Welcome to the MLDP demonstration GUI application" />
-            <Label styleClass="text-muted" text="Use the menu bar above to access application features" />
-            <Region VBox.vgrow="ALWAYS" />
-            <Label styleClass="text-info" text="Status: Ready" />
-         </VBox>
+         <!-- Content will be loaded dynamically -->
       </StackPane>
    </center>
    <bottom>

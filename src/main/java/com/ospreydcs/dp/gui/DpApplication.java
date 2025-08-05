@@ -24,6 +24,13 @@ public class DpApplication {
     private Instant dataBeginTime = null;
     private Instant dataEndTime = null;
     private List<PvDetail> pvDetails = null;
+    
+    // application state tracking for home view
+    private boolean hasIngestedData = false;
+    private boolean hasPerformedQueries = false;
+    private String lastOperationResult = null;
+    private int totalPvsIngested = 0;
+    private int totalBucketsCreated = 0;
 
     public boolean init() {
 
@@ -108,15 +115,31 @@ public class DpApplication {
         this.pvDetails = pvDetails;
         
         try {
+            int totalBuckets = 0;
+            
             // Generate and ingest data for each PV
             for (PvDetail pvDetail : pvDetails) {
                 ResultStatus result = generateAndIngestPvData(pvDetail, beginTime, endTime, tags, attributes, bucketSizeSeconds);
                 if (result.isError) {
                     return result; // Return first error encountered
                 }
+                
+                // Count buckets created for this PV
+                long totalDurationSeconds = java.time.Duration.between(beginTime, endTime).toSeconds();
+                int pvBuckets = (int) Math.ceil((double) totalDurationSeconds / bucketSizeSeconds);
+                totalBuckets += pvBuckets;
             }
             
-            return new ResultStatus(false, "Successfully generated and ingested data for " + pvDetails.size() + " PVs");
+            // Update application state tracking
+            this.hasIngestedData = true;
+            this.totalPvsIngested = pvDetails.size();
+            this.totalBucketsCreated = totalBuckets;
+            
+            String successMessage = "Successfully generated and ingested data for " + pvDetails.size() + 
+                " PVs in " + totalBuckets + " bucket(s)";
+            this.lastOperationResult = successMessage;
+            
+            return new ResultStatus(false, successMessage);
             
         } catch (Exception e) {
             return new ResultStatus(true, "Error during data generation: " + e.getMessage());
@@ -274,4 +297,20 @@ public class DpApplication {
     public Instant getDataBeginTime() { return dataBeginTime; }
     public Instant getDataEndTime() { return dataEndTime; }
     public List<PvDetail> getPvDetails() { return pvDetails; }
+    
+    // Getters for application state tracking (for home view)
+    public boolean hasIngestedData() { return hasIngestedData; }
+    public boolean hasPerformedQueries() { return hasPerformedQueries; }
+    public String getLastOperationResult() { return lastOperationResult; }
+    public int getTotalPvsIngested() { return totalPvsIngested; }
+    public int getTotalBucketsCreated() { return totalBucketsCreated; }
+    
+    // Methods for updating application state (for use by other operations)
+    public void setHasPerformedQueries(boolean hasPerformed) { 
+        this.hasPerformedQueries = hasPerformed; 
+    }
+    
+    public void setLastOperationResult(String result) { 
+        this.lastOperationResult = result; 
+    }
 }

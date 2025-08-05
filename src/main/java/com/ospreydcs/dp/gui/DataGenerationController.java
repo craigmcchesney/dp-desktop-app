@@ -340,6 +340,11 @@ public class DataGenerationController implements Initializable {
     public void setMainController(MainController mainController) {
         this.mainController = mainController;
         
+        // Inject MainController into ViewModel for home view updates
+        if (viewModel != null) {
+            viewModel.setMainController(mainController);
+        }
+        
         // Set up status message forwarding
         setupStatusListener();
         

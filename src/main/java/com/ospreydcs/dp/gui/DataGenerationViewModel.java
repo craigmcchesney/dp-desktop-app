@@ -61,6 +61,7 @@ public class DataGenerationViewModel {
     private final Map<String, ObservableList<String>> requestAttributeOptions = new HashMap<>();
 
     private DpApplication dpApplication;
+    private MainController mainController;
 
     public DataGenerationViewModel() {
         initializeAttributeOptions();
@@ -80,6 +81,11 @@ public class DataGenerationViewModel {
     public void setDpApplication(DpApplication dpApplication) {
         this.dpApplication = dpApplication;
         logger.debug("DpApplication injected into DataGenerationViewModel");
+    }
+    
+    public void setMainController(MainController mainController) {
+        this.mainController = mainController;
+        logger.debug("MainController injected into DataGenerationViewModel");
     }
 
     // Provider Details property getters
@@ -317,6 +323,23 @@ public class DataGenerationViewModel {
             // Success!
             statusMessage.set("Data generation completed successfully: " + ingestResult.msg);
             logger.info("Data generation completed successfully: {}", ingestResult.msg);
+            
+            // Notify home view of successful data generation
+            if (mainController != null) {
+                mainController.onDataGenerationSuccess(ingestResult.msg);
+                
+                // Navigate back to home view after successful operation
+                javafx.application.Platform.runLater(() -> {
+                    try {
+                        Thread.sleep(2000); // Brief delay to show success message
+                        mainController.switchToMainView();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        logger.warn("Interrupted while waiting to navigate to home view", e);
+                        mainController.switchToMainView();
+                    }
+                });
+            }
             
         } catch (Exception e) {
             logger.error("Error during data generation", e);
