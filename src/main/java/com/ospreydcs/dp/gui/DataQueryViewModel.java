@@ -405,6 +405,8 @@ public class DataQueryViewModel {
                         // Handle other data types
                         if (value.hasIntValue()) {
                             row.add(value.getIntValue());
+                        } else if (value.hasLongValue()) {
+                            row.add(value.getLongValue());
                         } else if (value.hasDoubleValue()) {
                             row.add(value.getDoubleValue());
                         } else if (value.hasStringValue()) {
