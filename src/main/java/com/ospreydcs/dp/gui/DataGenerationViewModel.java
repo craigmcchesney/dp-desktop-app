@@ -36,7 +36,6 @@ public class DataGenerationViewModel {
     
     private final ObservableList<String> requestTags = FXCollections.observableArrayList();
     private final ObservableList<String> requestAttributes = FXCollections.observableArrayList();
-    private final StringProperty bucketSize = new SimpleStringProperty("1 second");
     private final StringProperty eventName = new SimpleStringProperty();
 
     // PV Details properties
@@ -107,7 +106,6 @@ public class DataGenerationViewModel {
     
     public ObservableList<String> getRequestTags() { return requestTags; }
     public ObservableList<String> getRequestAttributes() { return requestAttributes; }
-    public StringProperty bucketSizeProperty() { return bucketSize; }
     public StringProperty eventNameProperty() { return eventName; }
 
     // PV Details property getters
@@ -255,12 +253,7 @@ public class DataGenerationViewModel {
     }
     
     public int getBucketSizeSeconds() {
-        String bucketSizeValue = bucketSize.get();
-        if ("1 minute".equals(bucketSizeValue)) {
-            return 60;
-        } else {
-            return 1; // Default to 1 second
-        }
+        return 1; // Always use 1 second bucket size
     }
 
     public void generateData() {

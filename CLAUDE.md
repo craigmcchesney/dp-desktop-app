@@ -111,14 +111,16 @@ Tools → Annotate, Export, Upload, Console
 
 ### Current Implementation Status
 - ✅ In-process service ecosystem container
-- ✅ API client structure (IngestionClient fully implemented)
+- ✅ API client structure (IngestionClient and QueryClient implemented)
 - ✅ High-level application model with provider registration and data generation
 - ✅ JavaFX/FXML GUI framework with BootstrapFX styling
 - ✅ Main window with navigation and welcome screen
 - ✅ Data generation UI with form validation and PV management
 - ✅ Random walk data generation algorithm
 - ✅ Provider registration and data ingestion workflows
-- 🔄 Query and visualization UI (planned)
+- ✅ Data query UI with PV search functionality and tabular results display
+- ✅ PV search panel supporting search by name list and pattern matching
+- ✅ Query results table with dynamic column expansion
 - 🔄 Annotation UI (planned)
 - 🔄 Data export functionality (planned)
 
@@ -149,6 +151,14 @@ The application follows the Model-View-ViewModel pattern:
 4. **Form Validation**: Ensures all required fields are filled and time ranges are valid
 5. **Data Generation**: Uses random walk algorithm to generate time-series data
 6. **Ingestion**: Calls gRPC API to ingest generated data into MongoDB
+
+### Data Query Workflow (Implemented)
+1. **Query Specification**: Collapsible panel for configuring query parameters
+2. **PV Selection**: Add PV names manually or via search panel with pattern matching
+3. **Time Range Selection**: Set query begin/end times with date pickers and time spinners
+4. **PV Search Panel**: Search existing PVs by name list or pattern matching
+5. **Query Execution**: Execute query and display results in expandable table
+6. **Results Display**: Dynamic table with columns for timestamp and selected PVs
 
 ### Key UI Components
 - **Spinner Binding**: Custom binding logic for time spinners to avoid JavaFX binding issues
