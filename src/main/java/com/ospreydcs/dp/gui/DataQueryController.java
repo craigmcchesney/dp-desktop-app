@@ -7,6 +7,10 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.VBox;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.XYChart;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.NumberAxis;
 import javafx.stage.Stage;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -58,7 +62,12 @@ public class DataQueryController implements Initializable {
     // Query Results FXML components
     @FXML private VBox queryResultsSection;
     @FXML private Label rowCountLabel;
+    @FXML private TabPane resultsTabPane;
     @FXML private TableView<ObservableList<Object>> resultsTable;
+    @FXML private LineChart<String, Number> resultsChart;
+    @FXML private CategoryAxis chartXAxis;
+    @FXML private NumberAxis chartYAxis;
+    @FXML private Label chartPlaceholder;
     @FXML private Label resultsStatusLabel;
     @FXML private ProgressIndicator queryProgressIndicator;
 
@@ -78,6 +87,7 @@ public class DataQueryController implements Initializable {
         // Initialize UI components
         initializeSpinners();
         initializeRadioButtons();
+        initializeChart();
         
         // Bind UI components to view model properties
         bindUIToViewModel();
@@ -105,6 +115,21 @@ public class DataQueryController implements Initializable {
         searchByNameListRadio.setToggleGroup(searchTypeToggleGroup);
         searchByPatternRadio.setToggleGroup(searchTypeToggleGroup);
         searchByNameListRadio.setSelected(true); // Default selection
+    }
+    
+    private void initializeChart() {
+        // Configure chart properties
+        resultsChart.setTitle("PV Time-Series Data");
+        resultsChart.setCreateSymbols(false); // Don't create symbols on data points for better performance
+        resultsChart.setLegendSide(javafx.geometry.Side.RIGHT);
+        
+        // Configure axes
+        chartXAxis.setLabel("Time");
+        chartYAxis.setLabel("Value");
+        
+        // Note: Initial visibility is set in FXML (chart hidden, placeholder visible)
+        
+        logger.debug("Chart initialized with title and axis labels");
     }
 
     private void bindUIToViewModel() {
@@ -206,7 +231,13 @@ public class DataQueryController implements Initializable {
         viewModel.getTableColumnNames().addListener((javafx.collections.ListChangeListener<String>) change -> {
             if (change.next() && change.wasAdded()) {
                 setupTableColumns();
+                setupChart();
             }
+        });
+        
+        // Set up chart data updates when table data changes
+        viewModel.getTableData().addListener((javafx.collections.ListChangeListener<ObservableList<Object>>) change -> {
+            updateChart();
         });
     }
     
@@ -232,6 +263,150 @@ public class DataQueryController implements Initializable {
         }
         
         logger.debug("Table columns set up for {} columns", columnNames.size());
+    }
+    
+    private void setupChart() {
+        logger.debug("setupChart() called with column names: {}", viewModel.getTableColumnNames());
+        resultsChart.getData().clear();
+        
+        ObservableList<String> columnNames = viewModel.getTableColumnNames();
+        if (columnNames.isEmpty()) {
+            logger.debug("No column names available, skipping chart setup");
+            return;
+        }
+        
+        // Create a series for each PV (skip timestamp column)
+        int seriesCount = 0;
+        for (String columnName : columnNames) {
+            if (!columnName.equals("timestamp")) {
+                XYChart.Series<String, Number> series = new XYChart.Series<>();
+                series.setName(columnName);
+                resultsChart.getData().add(series);
+                seriesCount++;
+                logger.debug("Added series for PV: {}", columnName);
+            }
+        }
+        
+        logger.debug("Chart set up for {} PV series out of {} total columns", seriesCount, columnNames.size());
+    }
+    
+    private void updateChart() {
+        logger.debug("updateChart() called - chart has {} series", resultsChart.getData().size());
+        
+        if (resultsChart.getData().isEmpty()) {
+            logger.debug("Chart data is empty, skipping update");
+            return;
+        }
+        
+        ObservableList<String> columnNames = viewModel.getTableColumnNames();
+        ObservableList<ObservableList<Object>> tableData = viewModel.getTableData();
+        
+        logger.debug("updateChart() - columnNames: {}, tableData rows: {}", columnNames, tableData.size());
+        
+        if (columnNames.isEmpty() || tableData.isEmpty()) {
+            logger.debug("No column names or table data, showing placeholder");
+            showChartPlaceholder(true);
+            return;
+        }
+        
+        // Clear existing data points
+        for (XYChart.Series<String, Number> series : resultsChart.getData()) {
+            series.getData().clear();
+        }
+        
+        // Find timestamp column index
+        int timestampIndex = -1;
+        for (int i = 0; i < columnNames.size(); i++) {
+            if (columnNames.get(i).equals("timestamp")) {
+                timestampIndex = i;
+                break;
+            }
+        }
+        
+        if (timestampIndex == -1) {
+            logger.warn("No timestamp column found for chart");
+            showChartPlaceholder(true);
+            return;
+        }
+        
+        // Sample data for performance (show every Nth point for large datasets)
+        int totalRows = tableData.size();
+        int sampleInterval = Math.max(1, totalRows / 1000); // Max 1000 points for performance
+        
+        logger.debug("Processing {} rows with sample interval {}, timestamp column at index {}", totalRows, sampleInterval, timestampIndex);
+        
+        int dataPointsAdded = 0;
+        // Populate chart with sampled data
+        for (int rowIndex = 0; rowIndex < totalRows; rowIndex += sampleInterval) {
+            ObservableList<Object> row = tableData.get(rowIndex);
+            if (row.size() <= timestampIndex) {
+                continue;
+            }
+            
+            String timestamp = formatTimestampForChart(row.get(timestampIndex));
+            
+            // Add data points for each PV series
+            int seriesIndex = 0;
+            for (int colIndex = 0; colIndex < columnNames.size(); colIndex++) {
+                if (colIndex == timestampIndex) {
+                    continue; // Skip timestamp column
+                }
+                
+                if (seriesIndex < resultsChart.getData().size() && colIndex < row.size()) {
+                    Object value = row.get(colIndex);
+                    Number numericValue = parseNumericValue(value);
+                    
+                    if (numericValue != null) {
+                        XYChart.Series<String, Number> series = resultsChart.getData().get(seriesIndex);
+                        series.getData().add(new XYChart.Data<>(timestamp, numericValue));
+                    }
+                }
+                seriesIndex++;
+            }
+        }
+        
+        showChartPlaceholder(false);
+        logger.debug("Chart updated with {} sampled data points", totalRows / Math.max(1, sampleInterval));
+    }
+    
+    private String formatTimestampForChart(Object timestampValue) {
+        if (timestampValue == null) {
+            return "N/A";
+        }
+        
+        String timestamp = timestampValue.toString();
+        // Simplify timestamp format for chart display (show only time part if same date)
+        if (timestamp.contains("T")) {
+            String[] parts = timestamp.split("T");
+            if (parts.length > 1) {
+                return parts[1].substring(0, Math.min(8, parts[1].length())); // HH:mm:ss
+            }
+        }
+        
+        return timestamp;
+    }
+    
+    private Number parseNumericValue(Object value) {
+        if (value == null) {
+            return null;
+        }
+        
+        if (value instanceof Number) {
+            return (Number) value;
+        }
+        
+        try {
+            return Double.parseDouble(value.toString());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+    
+    private void showChartPlaceholder(boolean show) {
+        chartPlaceholder.setVisible(show);
+        chartPlaceholder.setManaged(show);
+        resultsChart.setVisible(!show);
+        resultsChart.setManaged(!show);
     }
     
     private void setupSpinnerBinding(Spinner<Integer> spinner, javafx.beans.property.IntegerProperty viewModelProperty, String name) {

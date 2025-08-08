@@ -3,6 +3,7 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.chart.*?>
 
 <VBox spacing="20" styleClass="container" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ospreydcs.dp.gui.DataQueryController">
     <padding>
@@ -126,12 +127,36 @@
             <Label fx:id="rowCountLabel" styleClass="text-success" text="0 rows" />
         </HBox>
         
-        <!-- Results Table -->
-        <TableView fx:id="resultsTable" VBox.vgrow="ALWAYS">
-            <placeholder>
-                <Label text="No query results to display. Use the Query Specification section above to submit a query." />
-            </placeholder>
-        </TableView>
+        <!-- Results TabPane with Table and Chart views -->
+        <TabPane fx:id="resultsTabPane" VBox.vgrow="ALWAYS" tabClosingPolicy="UNAVAILABLE">
+            <!-- Table Tab -->
+            <Tab text="📋 Table">
+                <TableView fx:id="resultsTable" VBox.vgrow="ALWAYS">
+                    <placeholder>
+                        <Label text="No query results to display. Use the Query Specification section above to submit a query." />
+                    </placeholder>
+                </TableView>
+            </Tab>
+            
+            <!-- Chart Tab -->
+            <Tab text="📈 Chart">
+                <StackPane>
+                    <!-- Chart container -->
+                    <LineChart fx:id="resultsChart" visible="false" managed="false">
+                        <xAxis>
+                            <CategoryAxis fx:id="chartXAxis" label="Time" />
+                        </xAxis>
+                        <yAxis>
+                            <NumberAxis fx:id="chartYAxis" label="Value" />
+                        </yAxis>
+                    </LineChart>
+                    
+                    <!-- Chart placeholder when no data -->
+                    <Label fx:id="chartPlaceholder" text="No data to chart. Submit a query to display time-series data." 
+                           styleClass="text-muted" visible="true" managed="true" />
+                </StackPane>
+            </Tab>
+        </TabPane>
         
         <!-- Results Status -->
         <HBox alignment="CENTER_LEFT" spacing="10">
