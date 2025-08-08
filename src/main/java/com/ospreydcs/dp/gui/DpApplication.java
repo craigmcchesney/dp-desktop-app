@@ -11,12 +11,17 @@ import com.ospreydcs.dp.grpc.v1.query.QueryTableResponse;
 import com.ospreydcs.dp.gui.model.PvDetail;
 import com.ospreydcs.dp.service.common.model.ResultStatus;
 import com.ospreydcs.dp.service.inprocess.InprocessServiceEcosystem;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
 public class DpApplication {
+
+    // static variables
+    private static final Logger logger = LogManager.getLogger();
 
     // instance variables
     private InprocessServiceEcosystem inprocessServiceEcosystem = null;
@@ -149,6 +154,7 @@ public class DpApplication {
             // Generate and ingest data for each PV
             for (PvDetail pvDetail : pvDetails) {
                 ResultStatus result = generateAndIngestPvData(pvDetail, beginTime, endTime, tags, attributes, bucketSizeSeconds);
+                logger.debug("generating pv: {} values per second: {}", pvDetail.getPvName(), pvDetail.getValuesPerSecond());
                 if (result.isError) {
                     return result; // Return first error encountered
                 }

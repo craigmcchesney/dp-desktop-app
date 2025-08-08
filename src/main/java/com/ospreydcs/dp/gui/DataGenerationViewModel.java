@@ -200,6 +200,7 @@ public class DataGenerationViewModel {
 
     public void addCurrentPvDetail() {
         if (isCurrentPvDetailValid()) {
+            logger.debug("Creating PV detail with values per second: {}", currentPvValuesPerSecond.get());
             PvDetail pvDetail = new PvDetail(
                 currentPvName.get(),
                 currentPvDataType.get(),
@@ -237,7 +238,7 @@ public class DataGenerationViewModel {
     private void clearCurrentPvEntry() {
         currentPvName.set("");
         currentPvDataType.set("integer");
-        currentPvValuesPerSecond.set(10);
+        // Don't reset currentPvValuesPerSecond - preserve user's ComboBox selection
         currentPvInitialValue.set("");
         currentPvMaxStep.set("");
     }

@@ -123,7 +123,9 @@ public class DataGenerationController implements Initializable {
         
         pvNameField.textProperty().bindBidirectional(viewModel.currentPvNameProperty());
         pvDataTypeCombo.valueProperty().bindBidirectional(viewModel.currentPvDataTypeProperty());
-        pvValuesPerSecondCombo.valueProperty().bindBidirectional(viewModel.currentPvValuesPerSecondProperty().asObject());
+        
+        // Use custom binding for Integer ComboBox instead of asObject() which might not work correctly
+        setupIntegerComboBinding(pvValuesPerSecondCombo, viewModel.currentPvValuesPerSecondProperty());
         pvInitialValueField.textProperty().bindBidirectional(viewModel.currentPvInitialValueProperty());
         pvMaxStepField.textProperty().bindBidirectional(viewModel.currentPvMaxStepProperty());
 
@@ -275,6 +277,9 @@ public class DataGenerationController implements Initializable {
         // PV Values per Second ComboBox
         pvValuesPerSecondCombo.getItems().addAll(1, 10, 100);
         
+        // Set initial value to match ViewModel default
+        pvValuesPerSecondCombo.setValue(viewModel.currentPvValuesPerSecondProperty().get());
+        
         logger.debug("ComboBox items populated");
     }
     
@@ -307,6 +312,35 @@ public class DataGenerationController implements Initializable {
         });
         
         logger.debug("{} spinner binding completed", name);
+    }
+    
+    private void setupIntegerComboBinding(ComboBox<Integer> combo, javafx.beans.property.IntegerProperty viewModelProperty) {
+        logger.debug("Setting up custom Integer ComboBox binding");
+        
+        // Initialize ViewModel property from ComboBox value
+        if (combo.getValue() != null) {
+            viewModelProperty.set(combo.getValue());
+        }
+        logger.debug("Initialized ViewModel property to: {}", viewModelProperty.get());
+        
+        // Listen for changes in ComboBox and update ViewModel
+        combo.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                logger.debug("pvValuesPerSecondCombo changed from {} to {}", oldVal, newVal);
+                viewModelProperty.set(newVal);
+                logger.debug("Updated ViewModel property to: {}", viewModelProperty.get());
+            }
+        });
+        
+        // Listen for changes in ViewModel and update ComboBox
+        viewModelProperty.addListener((obs, oldVal, newVal) -> {
+            if (!newVal.equals(combo.getValue())) {
+                logger.debug("ViewModel property changed from {} to {}, updating ComboBox", oldVal, newVal);
+                combo.setValue(newVal.intValue());
+            }
+        });
+        
+        logger.debug("Integer ComboBox binding completed");
     }
     
     private void setupStatusListener() {
