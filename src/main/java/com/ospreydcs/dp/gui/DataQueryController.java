@@ -424,8 +424,8 @@ public class DataQueryController implements Initializable {
         
         showChartPlaceholder(false);
         
-        // Tooltips disabled - symbols disabled for performance
-        logger.debug("Chart updated - tooltips not available without symbols");
+        // Set up chart area mouse tracking for tooltips (no symbols needed)
+        setupChartMouseTracking();
         
         logger.debug("Chart updated with {} sampled data points", totalRows / Math.max(1, sampleInterval));
     }
@@ -889,6 +889,106 @@ public class DataQueryController implements Initializable {
         }
         
         return timestamp;
+    }
+    
+    private Tooltip mouseTrackingTooltip;
+    
+    private void setupChartMouseTracking() {
+        // Create a single tooltip that we'll reuse and reposition
+        if (mouseTrackingTooltip == null) {
+            mouseTrackingTooltip = new Tooltip();
+            mouseTrackingTooltip.setStyle("-fx-font-size: 12px; -fx-background-color: rgba(0,0,0,0.8); -fx-text-fill: white;");
+            mouseTrackingTooltip.setAutoHide(false);
+        }
+        
+        // Remove any existing mouse handlers
+        resultsChart.setOnMouseMoved(null);
+        resultsChart.setOnMouseExited(null);
+        
+        // Add mouse tracking to the chart
+        resultsChart.setOnMouseMoved(event -> {
+            try {
+                DataPointInfo nearestPoint = findNearestDataPoint(event.getX(), event.getY());
+                if (nearestPoint != null) {
+                    String tooltipText = formatTooltip(nearestPoint);
+                    mouseTrackingTooltip.setText(tooltipText);
+                    
+                    // Position tooltip near mouse cursor
+                    if (!mouseTrackingTooltip.isShowing()) {
+                        mouseTrackingTooltip.show(resultsChart, event.getScreenX() + 10, event.getScreenY() - 10);
+                    } else {
+                        mouseTrackingTooltip.setAnchorX(event.getScreenX() + 10);
+                        mouseTrackingTooltip.setAnchorY(event.getScreenY() - 10);
+                    }
+                } else {
+                    mouseTrackingTooltip.hide();
+                }
+            } catch (Exception e) {
+                logger.debug("Error in mouse tracking: {}", e.getMessage());
+                mouseTrackingTooltip.hide();
+            }
+        });
+        
+        // Hide tooltip when mouse leaves chart
+        resultsChart.setOnMouseExited(event -> {
+            if (mouseTrackingTooltip != null) {
+                mouseTrackingTooltip.hide();
+            }
+        });
+        
+        logger.debug("Chart mouse tracking enabled");
+    }
+    
+    private DataPointInfo findNearestDataPoint(double mouseX, double mouseY) {
+        if (resultsChart.getData().isEmpty()) {
+            return null;
+        }
+        
+        try {
+            // Convert mouse coordinates to chart value coordinates
+            Number xNum = chartXAxis.getValueForDisplay(mouseX - chartXAxis.getLayoutX());
+            Number yNum = chartYAxis.getValueForDisplay(mouseY - chartYAxis.getLayoutY());
+            
+            if (xNum == null || yNum == null) {
+                return null;
+            }
+            
+            double xValue = xNum.doubleValue();
+            double yValue = yNum.doubleValue();
+            
+            DataPointInfo nearest = null;
+            double minDistance = Double.MAX_VALUE;
+            
+            // Search through all series for the nearest point
+            for (XYChart.Series<Number, Number> series : resultsChart.getData()) {
+                for (XYChart.Data<Number, Number> dataPoint : series.getData()) {
+                    if (dataPoint.getExtraValue() instanceof DataPointInfo) {
+                        double pointX = dataPoint.getXValue().doubleValue();
+                        double pointY = dataPoint.getYValue().doubleValue();
+                        
+                        // Calculate distance (prioritize X-axis distance for time-series)
+                        double deltaX = (pointX - xValue);
+                        double deltaY = (pointY - yValue);
+                        double distance = Math.sqrt(deltaX * deltaX * 4 + deltaY * deltaY); // Weight X more heavily
+                        
+                        if (distance < minDistance) {
+                            minDistance = distance;
+                            nearest = (DataPointInfo) dataPoint.getExtraValue();
+                        }
+                    }
+                }
+            }
+            
+            // Only return if reasonably close (within chart bounds)
+            if (minDistance < 5.0) { // Adjust sensitivity as needed
+                return nearest;
+            }
+            
+        } catch (Exception e) {
+            logger.debug("Error finding nearest data point: {}", e.getMessage());
+        }
+        
+        return null;
     }
     
     // Helper class to store original data point information for tooltips
