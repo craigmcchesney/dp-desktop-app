@@ -111,6 +111,7 @@
                         <!-- Action Buttons -->
                         <HBox spacing="10" alignment="CENTER_LEFT">
                             <Button fx:id="submitQueryButton" onAction="#onSubmitQuery" styleClass="btn, btn-primary, btn-lg" text="Submit Query" />
+                            <Button fx:id="addToDatasetButton" onAction="#onAddToDataset" styleClass="btn, btn-info" text="Add to Dataset" />
                             <Button fx:id="cancelQueryButton" onAction="#onCancelQuery" styleClass="btn, btn-default" text="Cancel" />
                             <Region HBox.hgrow="ALWAYS" />
                             <Label fx:id="queryStatusLabel" styleClass="text-info" />

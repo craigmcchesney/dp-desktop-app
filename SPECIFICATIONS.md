@@ -218,3 +218,7 @@ Development of the demo GUI application will proceed according to the following 
 8.2.2 The "DataSet Builder" section includes a set of buttons labeled "Reset", "Save", and "Load".  These should be initially disabled and the handling for the buttons will be defined as a follow on task.
 8.2.3 When the list of "Data Blocks" is empty, the "Dataset Builder" tab shows the status message: "Use the Query Editor tab to add Data Blocks.".
 
+8.3 The third task is to add a mechanism for adding data blocks using the query specification details in the "Query Editor" tab to the "Dataset Builder" list of data blocks.
+8.3.1 Add a new button labeled "Add to Dataset" to the "Query Editor" tab next to the cancel button.
+8.3.2 The new button should only be enabled when the Query Editor contents are valid (e.g., non-empty list of PV names, both begin/end time are specified, end time is after begin time), otherwise it should be disabled.
+8.3.3 When the "Add to Dataset" button is clicked, a "DataBlockDetail" object is created for the list of PV Names and Begin/End Time from the Query Editor tab and added to the list of DataBlockDetail objects in the "Dataset Builder" tab, and the "Dataset Builder" tab is displayed along with the new entry in the list of Data Blocks.

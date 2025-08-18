@@ -60,6 +60,7 @@ public class DataQueryController implements Initializable {
     
     // Action Buttons FXML components
     @FXML private Button submitQueryButton;
+    @FXML private Button addToDatasetButton;
     @FXML private Button cancelQueryButton;
     @FXML private Label queryStatusLabel;
     
@@ -207,7 +208,8 @@ public class DataQueryController implements Initializable {
         
         
         // Button state bindings
-        submitQueryButton.disableProperty().bind(viewModel.isQueryingProperty());
+        submitQueryButton.disableProperty().bind(viewModel.isQueryingProperty().or(viewModel.isQueryValidProperty().not()));
+        addToDatasetButton.disableProperty().bind(viewModel.isQueryingProperty().or(viewModel.isQueryValidProperty().not()));
         searchPvButton.disableProperty().bind(viewModel.isSearchingProperty());
         addPvButton.disableProperty().bind(viewModel.isQueryingProperty());
         removePvButton.disableProperty().bind(viewModel.isQueryingProperty());
@@ -881,6 +883,30 @@ public class DataQueryController implements Initializable {
     }
     
     @FXML
+    private void onAddToDataset() {
+        logger.info("Add to Dataset requested");
+        
+        // Update global state and validate query data
+        updateGlobalQueryState();
+        
+        // Create DataBlockDetail from current form data
+        com.ospreydcs.dp.gui.model.DataBlockDetail dataBlock = createDataBlockFromQueryEditor();
+        if (dataBlock != null) {
+            // Add to dataset builder
+            datasetBuilderViewModel.addDataBlock(dataBlock);
+            
+            // Switch to Dataset Builder tab
+            editorTabPane.getSelectionModel().select(1); // Switch to index 1 (Dataset Builder tab)
+            
+            viewModel.updateStatus("Data block added to dataset");
+            logger.info("Successfully added data block to dataset: {}", dataBlock);
+        } else {
+            viewModel.updateStatus("Failed to create data block - please check your input");
+            logger.warn("Failed to create data block from query editor form");
+        }
+    }
+    
+    @FXML
     private void onCancelQuery() {
         logger.info("Query cancelled by user");
         
@@ -1203,6 +1229,44 @@ public class DataQueryController implements Initializable {
         
         logger.debug("getEndTimeFromUI: result={}", result);
         return result;
+    }
+    
+    private com.ospreydcs.dp.gui.model.DataBlockDetail createDataBlockFromQueryEditor() {
+        try {
+            // Get PV names from the list
+            ObservableList<String> pvNames = viewModel.getPvNameList();
+            if (pvNames == null || pvNames.isEmpty()) {
+                logger.warn("Cannot create data block: no PV names specified");
+                return null;
+            }
+            
+            // Get time range from UI
+            java.time.Instant beginTime = getBeginTimeFromUI();
+            java.time.Instant endTime = getEndTimeFromUI();
+            
+            if (beginTime == null || endTime == null) {
+                logger.warn("Cannot create data block: invalid time range");
+                return null;
+            }
+            
+            if (!endTime.isAfter(beginTime)) {
+                logger.warn("Cannot create data block: end time must be after begin time");
+                return null;
+            }
+            
+            // Create and return the data block
+            java.util.List<String> pvNameList = new java.util.ArrayList<>(pvNames);
+            com.ospreydcs.dp.gui.model.DataBlockDetail dataBlock = 
+                new com.ospreydcs.dp.gui.model.DataBlockDetail(pvNameList, beginTime, endTime);
+            
+            logger.debug("Created data block: {} PVs, time range {} to {}", 
+                        pvNameList.size(), beginTime, endTime);
+            
+            return dataBlock;
+        } catch (Exception e) {
+            logger.error("Error creating data block from query editor: {}", e.getMessage(), e);
+            return null;
+        }
     }
     
     private void commitSpinnerValues() {

@@ -58,6 +58,7 @@ public class DataQueryViewModel {
     // Status properties
     private final StringProperty statusMessage = new SimpleStringProperty("Ready to query data");
     private final BooleanProperty hasQueryResults = new SimpleBooleanProperty(false);
+    private final BooleanProperty isQueryValid = new SimpleBooleanProperty(false);
 
     // Dependencies
     private DpApplication dpApplication;
@@ -65,6 +66,32 @@ public class DataQueryViewModel {
 
     public DataQueryViewModel() {
         logger.debug("DataQueryViewModel initialized");
+        
+        // Set up listeners to update validation state
+        setupValidationListeners();
+    }
+    
+    private void setupValidationListeners() {
+        // Listen to PV name list changes
+        pvNameList.addListener((javafx.collections.ListChangeListener<String>) change -> updateValidation());
+        
+        // Listen to date and time changes
+        queryBeginDate.addListener((obs, oldVal, newVal) -> updateValidation());
+        queryEndDate.addListener((obs, oldVal, newVal) -> updateValidation());
+        beginHour.addListener((obs, oldVal, newVal) -> updateValidation());
+        beginMinute.addListener((obs, oldVal, newVal) -> updateValidation());
+        beginSecond.addListener((obs, oldVal, newVal) -> updateValidation());
+        endHour.addListener((obs, oldVal, newVal) -> updateValidation());
+        endMinute.addListener((obs, oldVal, newVal) -> updateValidation());
+        endSecond.addListener((obs, oldVal, newVal) -> updateValidation());
+        
+        // Initial validation
+        updateValidation();
+    }
+    
+    private void updateValidation() {
+        boolean valid = isQueryValid();
+        isQueryValid.set(valid);
     }
 
     public void setDpApplication(DpApplication dpApplication) {
@@ -133,6 +160,7 @@ public class DataQueryViewModel {
     // Status property getters
     public StringProperty statusMessageProperty() { return statusMessage; }
     public BooleanProperty hasQueryResultsProperty() { return hasQueryResults; }
+    public BooleanProperty isQueryValidProperty() { return isQueryValid; }
 
     // Business logic methods
     public void toggleQuerySpecificationPanel() {
@@ -276,7 +304,7 @@ public class DataQueryViewModel {
     }
 
     public void submitQuery() {
-        if (!isQueryValid()) {
+        if (!isQueryValidWithMessages()) {
             return;
         }
 
@@ -450,6 +478,26 @@ public class DataQueryViewModel {
     }
 
     private boolean isQueryValid() {
+        if (pvNameList.isEmpty()) {
+            return false;
+        }
+        
+        if (queryBeginDate.get() == null || queryEndDate.get() == null) {
+            return false;
+        }
+        
+        try {
+            if (!getQueryBeginDateTime().isBefore(getQueryEndDateTime())) {
+                return false;
+            }
+        } catch (Exception e) {
+            return false;
+        }
+        
+        return true;
+    }
+    
+    private boolean isQueryValidWithMessages() {
         if (pvNameList.isEmpty()) {
             statusMessage.set("Please add at least one PV name");
             logger.warn("Query validation failed: no PV names specified");
