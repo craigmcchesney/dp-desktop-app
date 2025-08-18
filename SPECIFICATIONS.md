@@ -209,3 +209,12 @@ Development of the demo GUI application will proceed according to the following 
 8.1.2 Rename the "Query Specification" section to "Query Editor / Dataset Builder".
 8.1.3 Change the "Query Editor / Dataset Builder" section to contain two tabs labeled "Query Editor" and "Dataset Builder".
 8.1.4 Move the existing content of the "Query Specification" section to the new "Query Editor".
+
+8.2 The second task is to add content to the new "Dataset Builder" tab, including:
+8.2.1 The new "Dataset Builder" tab should include the following gui elements:
+8.2.1.1 "Name" field (brief String, required)
+8.2.1.2 "Description" (scrollable String, optional)
+8.2.1.3 List of "Data Blocks", each of which is a DataBlockDetail object that includes a list of String PV names and a time range with begin and end time.  The display string for each DataBlockDetail shown in the list of Data Blocks includes the list of PV names and the time range in human readable format e.g., "pv-1, pv-2, pv-3: 2025-08-15 11:03:00 -> 2025-08-15 11:05:00".
+8.2.2 The "DataSet Builder" section includes a set of buttons labeled "Reset", "Save", and "Load".  These should be initially disabled and the handling for the buttons will be defined as a follow on task.
+8.2.3 When the list of "Data Blocks" is empty, the "Dataset Builder" tab shows the status message: "Use the Query Editor tab to add Data Blocks.".
+

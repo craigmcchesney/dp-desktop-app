@@ -80,9 +80,19 @@ public class DataQueryController implements Initializable {
     
     // Editor Tab FXML components
     @FXML private TabPane editorTabPane;
+    
+    // Dataset Builder FXML components
+    @FXML private TextField datasetNameField;
+    @FXML private TextArea datasetDescriptionField;
+    @FXML private ListView<com.ospreydcs.dp.gui.model.DataBlockDetail> dataBlocksList;
+    @FXML private Button resetDatasetButton;
+    @FXML private Button saveDatasetButton;
+    @FXML private ComboBox<String> datasetActionsCombo;
+    @FXML private Label datasetStatusLabel;
 
     // Dependencies
     private DataQueryViewModel viewModel;
+    private DatasetBuilderViewModel datasetBuilderViewModel;
     private DpApplication dpApplication;
     private Stage primaryStage;
     private MainController mainController;
@@ -94,13 +104,15 @@ public class DataQueryController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
         logger.debug("DataQueryController initializing...");
         
-        // Create the view model
+        // Create the view models
         viewModel = new DataQueryViewModel();
+        datasetBuilderViewModel = new DatasetBuilderViewModel();
         
         // Initialize UI components
         initializeSpinners();
         initializeRadioButtons();
         initializeChart();
+        initializeDatasetBuilder();
         
         // Bind UI components to view model properties
         bindUIToViewModel();
@@ -143,6 +155,16 @@ public class DataQueryController implements Initializable {
         // Note: Initial visibility is set in FXML (chart hidden, placeholder visible)
         
         logger.debug("Chart initialized with title and axis labels");
+    }
+    
+    private void initializeDatasetBuilder() {
+        // Set up the Data Blocks ListView
+        dataBlocksList.setItems(datasetBuilderViewModel.getDataBlocks());
+        
+        // Populate the Dataset Actions ComboBox
+        datasetActionsCombo.getItems().addAll("Load", "Annotate", "Export");
+        
+        logger.debug("Dataset Builder initialized");
     }
 
     private void bindUIToViewModel() {
@@ -210,6 +232,16 @@ public class DataQueryController implements Initializable {
             int size = viewModel.getSearchResultPvNames().size();
             searchResultCountLabel.setText(size + " result(s) found");
         });
+        
+        // Dataset Builder bindings
+        datasetNameField.textProperty().bindBidirectional(datasetBuilderViewModel.datasetNameProperty());
+        datasetDescriptionField.textProperty().bindBidirectional(datasetBuilderViewModel.datasetDescriptionProperty());
+        datasetStatusLabel.textProperty().bind(datasetBuilderViewModel.statusMessageProperty());
+        
+        // Button state bindings
+        resetDatasetButton.disableProperty().bind(datasetBuilderViewModel.resetButtonEnabledProperty().not());
+        saveDatasetButton.disableProperty().bind(datasetBuilderViewModel.saveButtonEnabledProperty().not());
+        datasetActionsCombo.disableProperty().bind(datasetBuilderViewModel.datasetActionsEnabledProperty().not());
     }
 
     private void setupEventHandlers() {
@@ -865,6 +897,20 @@ public class DataQueryController implements Initializable {
         } else {
             logger.warn("MainController reference is null, cannot navigate back");
         }
+    }
+    
+    // Dataset Builder event handlers
+    @FXML
+    private void onResetDataset() {
+        logger.info("Dataset reset requested");
+        datasetBuilderViewModel.resetDataset();
+    }
+    
+    @FXML
+    private void onSaveDataset() {
+        logger.info("Dataset save requested");
+        // TODO: Implement dataset save functionality in future development
+        datasetBuilderViewModel.statusMessageProperty().set("Save functionality not yet implemented");
     }
     
     private void setupChartTooltipsWithRetry(int attemptCount) {

@@ -28,7 +28,7 @@
             <!-- Query Editor / Dataset Builder TabPane -->
             <TabPane fx:id="editorTabPane" tabClosingPolicy="UNAVAILABLE" prefHeight="500.0">
                 <!-- Query Editor Tab -->
-                <Tab text="📝 Query Editor">
+                <Tab text="🔍 Query Editor">
                     <ScrollPane fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED">
                         <VBox spacing="15">
                             <padding>
@@ -120,16 +120,61 @@
                 </Tab>
                 
                 <!-- Dataset Builder Tab -->
-                <Tab text="🔧 Dataset Builder">
-                    <VBox spacing="15" alignment="CENTER">
-                        <padding>
-                            <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
-                        </padding>
-                        
-                        <Label styleClass="h3" text="🚧 Dataset Builder" />
-                        <Label styleClass="text-muted" text="Dataset Builder functionality will be implemented in future development phases." />
-                        <Label styleClass="text-muted" text="This tab will provide tools for building and managing datasets." />
-                    </VBox>
+                <Tab text="🏗️ Dataset Builder">
+                    <ScrollPane fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED">
+                        <VBox spacing="20">
+                            <padding>
+                                <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+                            </padding>
+                            
+                            <!-- Dataset Details Section -->
+                            <VBox spacing="15" styleClass="well">
+                                <padding>
+                                    <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+                                </padding>
+                                
+                                <Label styleClass="h4" text="📄 Dataset Details" />
+                                
+                                <!-- Name Field -->
+                                <VBox spacing="5">
+                                    <Label styleClass="control-label" text="Name: *" />
+                                    <TextField fx:id="datasetNameField" promptText="Enter dataset name (required)" />
+                                </VBox>
+                                
+                                <!-- Description Field -->
+                                <VBox spacing="5">
+                                    <Label styleClass="control-label" text="Description:" />
+                                    <TextArea fx:id="datasetDescriptionField" promptText="Enter dataset description (optional)" 
+                                              prefRowCount="3" wrapText="true" />
+                                </VBox>
+                            </VBox>
+                            
+                            <!-- Data Blocks Section -->
+                            <VBox spacing="15" styleClass="well">
+                                <padding>
+                                    <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+                                </padding>
+                                
+                                <Label styleClass="h4" text="📊 Data Blocks *" />
+                                
+                                <!-- Data Blocks List -->
+                                <ListView fx:id="dataBlocksList" prefHeight="200.0">
+                                    <placeholder>
+                                        <Label text="Use the Query Editor tab to add Data Blocks." styleClass="text-muted" />
+                                    </placeholder>
+                                </ListView>
+                            </VBox>
+                            
+                            <!-- Action Buttons -->
+                            <HBox spacing="15" alignment="CENTER_LEFT">
+                                <Button fx:id="resetDatasetButton" text="Reset" styleClass="btn, btn-warning" disable="true" onAction="#onResetDataset" />
+                                <Button fx:id="saveDatasetButton" text="Save" styleClass="btn, btn-success" disable="true" onAction="#onSaveDataset" />
+                                <ComboBox fx:id="datasetActionsCombo" disable="true" promptText="Other actions..." />
+                                <Region HBox.hgrow="ALWAYS" />
+                                <Label fx:id="datasetStatusLabel" styleClass="text-muted" text="Ready to build dataset" />
+                            </HBox>
+                        </VBox>
+                    </ScrollPane>
                 </Tab>
             </TabPane>
         </VBox>
