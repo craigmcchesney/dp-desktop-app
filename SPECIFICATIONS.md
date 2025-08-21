@@ -230,3 +230,9 @@ Development of the demo GUI application will proceed according to the following 
 8.4.4 If the isError flag is not set, the API method call was successful and the SaveDataSetApiResult contains a String "id", which is the unique identifier for the Dataset saved to the database.  It should be displayed in the Dataset Builder's read-only "id" field.  
 8.4.5 The values in the "Dataset Builder" view components should be preserved in case there are subsequent saves to the Dataset.  
 8.4.6 Logic for enabling / disabling the "Save" button is unchanged, it should be enabled when the view contents are valid.
+
+8.5 The 5th task is to add "Remove" and "View Data" buttons to the "Dataset Builder".  
+8.5.1 Add two buttons labeled "Remove" and "View Data" positioned to the right of the "Data Blocks" list in the "Dataset Builder".  
+8.5.2 The buttons should be enabled when there is a selection in the "Data Blocks" list, otherwise they should be disabled.  
+8.5.3 When the "Remove" button is clicked, the selected data block should be removed from the "Data Blocks" list.  
+8.5.4 When the "View Data" button is clicked, the list of PV names and begin / end times for the item selected in the "Data Blocks" list should be set as the models for the corresponding fields in the "Query Editor", and the view should change to display the tab for the "Query Editor" displaying the PV names and time range for the selected data block.

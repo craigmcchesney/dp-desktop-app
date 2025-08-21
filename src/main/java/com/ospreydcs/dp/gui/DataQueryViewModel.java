@@ -569,4 +569,44 @@ public class DataQueryViewModel {
         statusMessage.set(message);
         logger.debug("Status updated: {}", message);
     }
+    
+    /**
+     * Populates the Query Editor fields from a DataBlockDetail object.
+     * Used by the "View Data" button in the Dataset Builder.
+     */
+    public void populateFromDataBlock(com.ospreydcs.dp.gui.model.DataBlockDetail dataBlock) {
+        if (dataBlock == null) {
+            logger.warn("Cannot populate from null data block");
+            return;
+        }
+        
+        logger.info("Populating Query Editor from data block: {}", dataBlock);
+        
+        // Set PV names
+        if (dataBlock.getPvNames() != null) {
+            pvNameList.setAll(dataBlock.getPvNames());
+            logger.debug("Set {} PV names from data block", dataBlock.getPvNames().size());
+        }
+        
+        // Set time range from data block
+        if (dataBlock.getBeginTime() != null) {
+            LocalDateTime beginDateTime = LocalDateTime.ofInstant(dataBlock.getBeginTime(), ZoneId.systemDefault());
+            queryBeginDate.set(beginDateTime.toLocalDate());
+            beginHour.set(beginDateTime.getHour());
+            beginMinute.set(beginDateTime.getMinute());
+            beginSecond.set(beginDateTime.getSecond());
+            logger.debug("Set begin time from data block: {}", beginDateTime);
+        }
+        
+        if (dataBlock.getEndTime() != null) {
+            LocalDateTime endDateTime = LocalDateTime.ofInstant(dataBlock.getEndTime(), ZoneId.systemDefault());
+            queryEndDate.set(endDateTime.toLocalDate());
+            endHour.set(endDateTime.getHour());
+            endMinute.set(endDateTime.getMinute());
+            endSecond.set(endDateTime.getSecond());
+            logger.debug("Set end time from data block: {}", endDateTime);
+        }
+        
+        updateStatus("Query Editor populated from selected data block");
+    }
 }

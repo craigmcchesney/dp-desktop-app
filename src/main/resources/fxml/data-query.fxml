@@ -165,12 +165,22 @@
                                 
                                 <Label styleClass="h4" text="📊 Data Blocks *" />
                                 
-                                <!-- Data Blocks List -->
-                                <ListView fx:id="dataBlocksList" prefHeight="200.0">
-                                    <placeholder>
-                                        <Label text="Use the Query Editor tab to add Data Blocks." styleClass="text-muted" />
-                                    </placeholder>
-                                </ListView>
+                                <!-- Data Blocks List with Control Buttons -->
+                                <HBox spacing="10" alignment="CENTER_LEFT">
+                                    <ListView fx:id="dataBlocksList" prefHeight="200.0" HBox.hgrow="ALWAYS">
+                                        <placeholder>
+                                            <Label text="Use the Query Editor tab to add Data Blocks." styleClass="text-muted" />
+                                        </placeholder>
+                                    </ListView>
+                                    <VBox spacing="5" minWidth="100">
+                                        <Button fx:id="removeDataBlockButton" text="Remove" 
+                                                styleClass="btn, btn-warning" disable="true" 
+                                                onAction="#onRemoveDataBlock" maxWidth="Infinity" />
+                                        <Button fx:id="viewDataBlockButton" text="View Data" 
+                                                styleClass="btn, btn-info" disable="true" 
+                                                onAction="#onViewDataBlock" maxWidth="Infinity" />
+                                    </VBox>
+                                </HBox>
                             </VBox>
                             
                             <!-- Action Buttons -->

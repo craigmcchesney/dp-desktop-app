@@ -87,6 +87,8 @@ public class DataQueryController implements Initializable {
     @FXML private TextField datasetNameField;
     @FXML private TextArea datasetDescriptionField;
     @FXML private ListView<com.ospreydcs.dp.gui.model.DataBlockDetail> dataBlocksList;
+    @FXML private Button removeDataBlockButton;
+    @FXML private Button viewDataBlockButton;
     @FXML private Button resetDatasetButton;
     @FXML private Button saveDatasetButton;
     @FXML private ComboBox<String> datasetActionsCombo;
@@ -246,6 +248,10 @@ public class DataQueryController implements Initializable {
         resetDatasetButton.disableProperty().bind(datasetBuilderViewModel.resetButtonEnabledProperty().not());
         saveDatasetButton.disableProperty().bind(datasetBuilderViewModel.saveButtonEnabledProperty().not());
         datasetActionsCombo.disableProperty().bind(datasetBuilderViewModel.datasetActionsEnabledProperty().not());
+        
+        // Data blocks control buttons - enable when there's a selection
+        removeDataBlockButton.disableProperty().bind(dataBlocksList.getSelectionModel().selectedItemProperty().isNull());
+        viewDataBlockButton.disableProperty().bind(dataBlocksList.getSelectionModel().selectedItemProperty().isNull());
     }
 
     private void setupEventHandlers() {
@@ -997,6 +1003,36 @@ public class DataQueryController implements Initializable {
             String errorMessage = "Save failed with exception: " + e.getMessage();
             datasetBuilderViewModel.statusMessageProperty().set(errorMessage);
             logger.error("Dataset save failed with exception", e);
+        }
+    }
+    
+    @FXML
+    private void onRemoveDataBlock() {
+        com.ospreydcs.dp.gui.model.DataBlockDetail selectedBlock = dataBlocksList.getSelectionModel().getSelectedItem();
+        if (selectedBlock != null) {
+            datasetBuilderViewModel.removeDataBlock(selectedBlock);
+            logger.info("Removed data block: {}", selectedBlock);
+            datasetBuilderViewModel.statusMessageProperty().set("Data block removed");
+        } else {
+            logger.warn("Remove data block requested but no selection");
+        }
+    }
+    
+    @FXML
+    private void onViewDataBlock() {
+        com.ospreydcs.dp.gui.model.DataBlockDetail selectedBlock = dataBlocksList.getSelectionModel().getSelectedItem();
+        if (selectedBlock != null) {
+            logger.info("View data requested for data block: {}", selectedBlock);
+            
+            // Populate Query Editor with data block details
+            viewModel.populateFromDataBlock(selectedBlock);
+            
+            // Switch to Query Editor tab (index 0)
+            editorTabPane.getSelectionModel().select(0);
+            
+            datasetBuilderViewModel.statusMessageProperty().set("Data block loaded in Query Editor");
+        } else {
+            logger.warn("View data block requested but no selection");
         }
     }
     
