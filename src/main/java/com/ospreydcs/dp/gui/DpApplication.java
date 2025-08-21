@@ -1,24 +1,25 @@
 package com.ospreydcs.dp.gui;
 
+import com.ospreydcs.dp.client.AnnotationClient;
 import com.ospreydcs.dp.client.ApiClient;
 import com.ospreydcs.dp.client.IngestionClient;
 import com.ospreydcs.dp.client.QueryClient;
-import com.ospreydcs.dp.client.result.IngestDataApiResult;
-import com.ospreydcs.dp.client.result.QueryPvMetadataApiResult;
-import com.ospreydcs.dp.client.result.QueryTableApiResult;
-import com.ospreydcs.dp.client.result.RegisterProviderApiResult;
+import com.ospreydcs.dp.client.result.*;
 import com.ospreydcs.dp.grpc.v1.ingestion.IngestDataResponse;
 import com.ospreydcs.dp.grpc.v1.ingestion.RegisterProviderResponse;
 import com.ospreydcs.dp.grpc.v1.query.QueryPvMetadataResponse;
 import com.ospreydcs.dp.grpc.v1.query.QueryTableRequest;
 import com.ospreydcs.dp.grpc.v1.query.QueryTableResponse;
+import com.ospreydcs.dp.gui.model.DataBlockDetail;
 import com.ospreydcs.dp.gui.model.PvDetail;
 import com.ospreydcs.dp.service.common.model.ResultStatus;
+import com.ospreydcs.dp.service.common.protobuf.EventMetadataUtility;
 import com.ospreydcs.dp.service.inprocess.InprocessServiceEcosystem;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -102,7 +103,8 @@ public class DpApplication {
         api = new ApiClient(
             inprocessServiceEcosystem.ingestionService.getIngestionChannel(),
             inprocessServiceEcosystem.queryService.getQueryChannel(),
-            inprocessServiceEcosystem.annotationService.getChannel());
+            inprocessServiceEcosystem.annotationService.getChannel()
+        );
         if (!api.init()) {
             return false;
         }
@@ -376,5 +378,74 @@ public class DpApplication {
         // call api method
         return api.queryClient.queryTable(params);
     }
-    
+
+    public SaveDataSetApiResult saveDataSet(
+            String id, String name, String description, List<DataBlockDetail> dataBlockDetails) {
+
+        // create API data blocks
+        final List<AnnotationClient.AnnotationDataBlock> annotationDataBlocks = new ArrayList<>();
+        for (DataBlockDetail dataBlockDetail : dataBlockDetails) {
+            annotationDataBlocks.add(new AnnotationClient.AnnotationDataBlock(
+                    dataBlockDetail.getBeginTime().getEpochSecond(),
+                    dataBlockDetail.getBeginTime().getNano(),
+                    dataBlockDetail.getEndTime().getEpochSecond(),
+                    dataBlockDetail.getEndTime().getNano(),
+                    dataBlockDetail.getPvNames()
+            ));
+        }
+
+        // create API dataset containing datablocks
+        final AnnotationClient.AnnotationDataSet annotationDataSet =
+                new AnnotationClient.AnnotationDataSet(
+                        id,
+                        name,
+                        "demo-user",
+                        description,
+                        annotationDataBlocks
+                );
+
+        // create params for api call with dataset
+        final AnnotationClient.SaveDataSetParams saveDataSetParams =
+                new AnnotationClient.SaveDataSetParams(annotationDataSet);
+
+        // call api method
+        return api.annotationClient.saveDataSet(saveDataSetParams);
+    }
+
+    public SaveAnnotationApiResult saveAnnotation(
+            String id,
+            String name,
+            List<String> dataSetIds,
+            List<String> annotationIds,
+            String comment,
+            List<String> tags,
+            Map<String, String> attributeMap,
+            String eventName
+    ) {
+        // create API event params
+        EventMetadataUtility.EventMetadataParams eventParams = null;
+        if (eventName != null) {
+            eventParams = new EventMetadataUtility.EventMetadataParams(
+                    eventName, null, null, null, null);
+        }
+
+        // create API request params
+        final AnnotationClient.SaveAnnotationRequestParams params =
+                new AnnotationClient.SaveAnnotationRequestParams(
+                        id,
+                        "demo-user",
+                        name,
+                        dataSetIds,
+                        annotationIds,
+                        comment,
+                        tags,
+                        attributeMap,
+                        eventParams,
+                        null
+                );
+
+        // call api method
+        return api.annotationClient.saveAnnotation(params);
+    }
+
 }

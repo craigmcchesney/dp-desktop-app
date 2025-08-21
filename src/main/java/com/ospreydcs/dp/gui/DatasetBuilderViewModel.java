@@ -16,6 +16,7 @@ public class DatasetBuilderViewModel {
     private static final Logger logger = LogManager.getLogger();
 
     // Dataset properties
+    private final StringProperty datasetId = new SimpleStringProperty("");
     private final StringProperty datasetName = new SimpleStringProperty("");
     private final StringProperty datasetDescription = new SimpleStringProperty("");
     
@@ -116,6 +117,7 @@ public class DatasetBuilderViewModel {
     }
     
     public void resetDataset() {
+        datasetId.set("");
         datasetName.set("");
         datasetDescription.set("");
         clearDataBlocks();
@@ -124,6 +126,10 @@ public class DatasetBuilderViewModel {
     }
     
     // Property getters for data binding
+    
+    public StringProperty datasetIdProperty() { return datasetId; }
+    public String getDatasetId() { return datasetId.get(); }
+    public void setDatasetId(String id) { datasetId.set(id != null ? id : ""); }
     
     public StringProperty datasetNameProperty() { return datasetName; }
     public String getDatasetName() { return datasetName.get(); }

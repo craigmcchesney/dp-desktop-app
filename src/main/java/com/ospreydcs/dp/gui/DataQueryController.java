@@ -83,6 +83,7 @@ public class DataQueryController implements Initializable {
     @FXML private TabPane editorTabPane;
     
     // Dataset Builder FXML components
+    @FXML private TextField datasetIdField;
     @FXML private TextField datasetNameField;
     @FXML private TextArea datasetDescriptionField;
     @FXML private ListView<com.ospreydcs.dp.gui.model.DataBlockDetail> dataBlocksList;
@@ -236,6 +237,7 @@ public class DataQueryController implements Initializable {
         });
         
         // Dataset Builder bindings
+        datasetIdField.textProperty().bindBidirectional(datasetBuilderViewModel.datasetIdProperty());
         datasetNameField.textProperty().bindBidirectional(datasetBuilderViewModel.datasetNameProperty());
         datasetDescriptionField.textProperty().bindBidirectional(datasetBuilderViewModel.datasetDescriptionProperty());
         datasetStatusLabel.textProperty().bind(datasetBuilderViewModel.statusMessageProperty());

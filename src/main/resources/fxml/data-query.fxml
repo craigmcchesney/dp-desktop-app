@@ -136,11 +136,18 @@
                                 
                                 <Label styleClass="h4" text="📄 Dataset Details" />
                                 
-                                <!-- Name Field -->
-                                <VBox spacing="5">
-                                    <Label styleClass="control-label" text="Name: *" />
-                                    <TextField fx:id="datasetNameField" promptText="Enter dataset name (required)" />
-                                </VBox>
+                                <!-- ID and Name Fields -->
+                                <HBox spacing="15" alignment="CENTER_LEFT">
+                                    <VBox spacing="5" minWidth="120">
+                                        <Label styleClass="control-label" text="ID:" />
+                                        <TextField fx:id="datasetIdField" editable="false" 
+                                                   promptText="Auto-generated" styleClass="text-muted" />
+                                    </VBox>
+                                    <VBox spacing="5" HBox.hgrow="ALWAYS">
+                                        <Label styleClass="control-label" text="Name: *" />
+                                        <TextField fx:id="datasetNameField" promptText="Enter dataset name (required)" />
+                                    </VBox>
+                                </HBox>
                                 
                                 <!-- Description Field -->
                                 <VBox spacing="5">
