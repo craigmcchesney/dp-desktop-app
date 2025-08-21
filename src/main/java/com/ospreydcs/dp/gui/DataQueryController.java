@@ -937,8 +937,67 @@ public class DataQueryController implements Initializable {
     @FXML
     private void onSaveDataset() {
         logger.info("Dataset save requested");
-        // TODO: Implement dataset save functionality in future development
-        datasetBuilderViewModel.statusMessageProperty().set("Save functionality not yet implemented");
+        
+        // Step 1: Validation
+        String name = datasetBuilderViewModel.getDatasetName();
+        if (name == null || name.trim().isEmpty()) {
+            datasetBuilderViewModel.statusMessageProperty().set("Dataset name is required");
+            logger.warn("Dataset save validation failed: name is empty");
+            return;
+        }
+        
+        if (datasetBuilderViewModel.getDataBlocks().isEmpty()) {
+            datasetBuilderViewModel.statusMessageProperty().set("Data blocks are required - use Query Editor to add data blocks");
+            logger.warn("Dataset save validation failed: no data blocks");
+            return;
+        }
+        
+        // Step 2: Extract dataset details
+        String id = datasetBuilderViewModel.getDatasetId();
+        String description = datasetBuilderViewModel.getDatasetDescription();
+        var dataBlocks = new java.util.ArrayList<>(datasetBuilderViewModel.getDataBlocks());
+        
+        logger.info("Saving dataset: id={}, name={}, description={}, dataBlocks={}", 
+                   id, name, description, dataBlocks.size());
+        
+        // Step 3: Call DpApplication.saveDataSet() method
+        try {
+            com.ospreydcs.dp.client.result.SaveDataSetApiResult apiResult = 
+                dpApplication.saveDataSet(id, name, description, dataBlocks);
+            
+            if (apiResult == null) {
+                datasetBuilderViewModel.statusMessageProperty().set("Save failed - null response from service");
+                logger.error("Dataset save failed: null API result");
+                return;
+            }
+            
+            // Step 4: Handle API result
+            if (apiResult.resultStatus.isError) {
+                // Error case
+                String errorMessage = "Save failed: " + apiResult.resultStatus.msg;
+                datasetBuilderViewModel.statusMessageProperty().set(errorMessage);
+                logger.error("Dataset save failed: {}", apiResult.resultStatus.msg);
+            } else {
+                // Success case - extract the dataset ID and update the field
+                if (apiResult.datasetId != null && !apiResult.datasetId.trim().isEmpty()) {
+                    datasetBuilderViewModel.setDatasetId(apiResult.datasetId);
+                    
+                    String successMessage = "Dataset saved successfully with ID: " + apiResult.datasetId;
+                    datasetBuilderViewModel.statusMessageProperty().set(successMessage);
+                    logger.info("Dataset save completed successfully: {}", apiResult.datasetId);
+                } else {
+                    // This shouldn't happen for successful saves, but handle gracefully
+                    String successMessage = "Dataset saved successfully";
+                    datasetBuilderViewModel.statusMessageProperty().set(successMessage);
+                    logger.warn("Dataset save completed but no ID returned");
+                }
+            }
+            
+        } catch (Exception e) {
+            String errorMessage = "Save failed with exception: " + e.getMessage();
+            datasetBuilderViewModel.statusMessageProperty().set(errorMessage);
+            logger.error("Dataset save failed with exception", e);
+        }
     }
     
     private void setupChartTooltipsWithRetry(int attemptCount) {

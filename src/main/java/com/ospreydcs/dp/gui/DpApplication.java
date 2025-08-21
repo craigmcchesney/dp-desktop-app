@@ -395,9 +395,16 @@ public class DpApplication {
         }
 
         // create API dataset containing datablocks
+        String annotationId;
+        // make sure id is either null or non-empty string
+        if (id != null && id.isEmpty()) {
+            annotationId = null;
+        } else {
+            annotationId = id;
+        }
         final AnnotationClient.AnnotationDataSet annotationDataSet =
                 new AnnotationClient.AnnotationDataSet(
-                        id,
+                        annotationId,
                         name,
                         "demo-user",
                         description,
