@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="10" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1">
+    <!-- Label -->
+    <Label fx:id="componentLabel" styleClass="control-label" text="Tags:" />
+    
+    <!-- Input section -->
+    <HBox spacing="10" alignment="CENTER_LEFT">
+        <TextField fx:id="tagInput" promptText="Enter tag" HBox.hgrow="ALWAYS" />
+        <Button fx:id="addTagButton" styleClass="btn, btn-success" text="Add Tag" />
+    </HBox>
+    
+    <!-- Tags list -->
+    <ListView fx:id="tagsList" prefHeight="100.0" minHeight="60.0" maxHeight="150.0">
+        <placeholder>
+            <Label text="No tags added yet." styleClass="text-muted" />
+        </placeholder>
+    </ListView>
+</VBox>

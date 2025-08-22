@@ -18,7 +18,7 @@
         
         <!-- Section Header with Toggle -->
         <HBox alignment="CENTER_LEFT" spacing="10">
-            <Button fx:id="toggleSpecificationButton" onAction="#onToggleQuerySpecification" styleClass="btn, btn-link" text="📋 Query Editor / Dataset Builder" />
+            <Button fx:id="toggleSpecificationButton" onAction="#onToggleQuerySpecification" styleClass="btn, btn-link" text="📋 Query Editor / Dataset Builder / Annotation Builder" />
             <Region HBox.hgrow="ALWAYS" />
             <Label fx:id="specificationStatusLabel" styleClass="text-muted" text="Required" />
         </HBox>
@@ -190,6 +190,79 @@
                                 <ComboBox fx:id="datasetActionsCombo" disable="true" promptText="Other actions..." />
                                 <Region HBox.hgrow="ALWAYS" />
                                 <Label fx:id="datasetStatusLabel" styleClass="text-muted" text="Ready to build dataset" />
+                            </HBox>
+                        </VBox>
+                    </ScrollPane>
+                </Tab>
+                
+                <!-- Annotation Builder Tab -->
+                <Tab text="🏷️ Annotation Builder">
+                    <ScrollPane fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED">
+                        <VBox spacing="20">
+                            <padding>
+                                <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+                            </padding>
+                            
+                            <!-- Annotation Details Section -->
+                            <VBox spacing="15" styleClass="well">
+                                <padding>
+                                    <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+                                </padding>
+                                
+                                <Label styleClass="h4" text="🏷️ Annotation Details" />
+                                
+                                <!-- ID and Name Fields -->
+                                <HBox spacing="15" alignment="CENTER_LEFT">
+                                    <VBox spacing="5" minWidth="120">
+                                        <Label styleClass="control-label" text="ID:" />
+                                        <TextField fx:id="annotationIdField" editable="false" 
+                                                   promptText="Auto-generated" styleClass="text-muted" />
+                                    </VBox>
+                                    <VBox spacing="5" HBox.hgrow="ALWAYS">
+                                        <Label styleClass="control-label" text="Name: *" />
+                                        <TextField fx:id="annotationNameField" promptText="Enter annotation name (required)" />
+                                    </VBox>
+                                </HBox>
+                                
+                                <!-- Comment Field -->
+                                <VBox spacing="5">
+                                    <Label styleClass="control-label" text="Comment:" />
+                                    <TextArea fx:id="annotationCommentField" promptText="Enter annotation comment (optional)" 
+                                              prefRowCount="3" wrapText="true" />
+                                </VBox>
+                                
+                                <!-- Event Name Field -->
+                                <VBox spacing="5">
+                                    <Label styleClass="control-label" text="Event Name:" />
+                                    <TextField fx:id="annotationEventNameField" promptText="Enter event or experiment name (optional)" />
+                                </VBox>
+                            </VBox>
+                            
+                            <!-- Target Datasets Section -->
+                            <VBox spacing="15" styleClass="well">
+                                <padding>
+                                    <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+                                </padding>
+                                
+                                <Label styleClass="h4" text="🎯 Target Datasets *" />
+                                
+                                <ListView fx:id="targetDatasetsList" prefHeight="120.0">
+                                    <placeholder>
+                                        <Label text="Use the Dataset Builder to create and add Datasets." styleClass="text-muted" />
+                                    </placeholder>
+                                </ListView>
+                            </VBox>
+                            
+                            <!-- Tags and Attributes Section -->
+                            <HBox fx:id="tagsAttributesContainer" spacing="20"></HBox>
+                            
+                            <!-- Action Buttons -->
+                            <HBox spacing="15" alignment="CENTER_LEFT">
+                                <Button fx:id="resetAnnotationButton" text="Reset" styleClass="btn, btn-warning" disable="true" onAction="#onResetAnnotation" />
+                                <Button fx:id="saveAnnotationButton" text="Save" styleClass="btn, btn-success" disable="true" onAction="#onSaveAnnotation" />
+                                <ComboBox fx:id="annotationActionsCombo" disable="true" promptText="Other actions..." />
+                                <Region HBox.hgrow="ALWAYS" />
+                                <Label fx:id="annotationStatusLabel" styleClass="text-muted" text="Ready to build annotation" />
                             </HBox>
                         </VBox>
                     </ScrollPane>

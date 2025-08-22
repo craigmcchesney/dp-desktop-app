@@ -236,3 +236,15 @@ Development of the demo GUI application will proceed according to the following 
 8.5.2 The buttons should be enabled when there is a selection in the "Data Blocks" list, otherwise they should be disabled.  
 8.5.3 When the "Remove" button is clicked, the selected data block should be removed from the "Data Blocks" list.  
 8.5.4 When the "View Data" button is clicked, the list of PV names and begin / end times for the item selected in the "Data Blocks" list should be set as the models for the corresponding fields in the "Query Editor", and the view should change to display the tab for the "Query Editor" displaying the PV names and time range for the selected data block.
+
+9. We are going to add a new tab to the data-query view labeled "Annotation Builder".  It should be positioned to the right of the "Dataset Builder" tab.  The purpose of the tab is to present a form for creating an annotation that targets one or more datasets, providing a description of the dataset(s) and relationship between them.  In addition to descriptive fields, an annotation can also contain user-defined calculations that are derived or somehow related to the target dataset(s).
+
+9.1 "Annotation Builder" form view.  The Annotation Builder tab should follow the pattern of the "Dataset" builder for look and feel.  The tabl content should be scrollable when the window is too small to show all the content.  The form contains the following elements, in the order presented:
+9.1.1 ID: (system generated, read only) - displays the Annotation id after saving it (or loading an Annotation from database)
+9.1.2 name (required) - brief String identifying the Annotation to its owner
+9.1.3 comment (optional) - longer String in scrollable editor
+9.1.4 list of DataSetDetail objects (required), using a human-readable display string.  The display string should include 1) the Dataset name, 2) the first few characters of the Dataset description, and 3) the display string for the first DataBlockDetail object in the Dataset's list of data blocks.
+9.1.5 list of tags (optional) - this includes three elements: 1) a text field for entering keywords (tags) 2) a list to display the tags entered by the user, and 3) a button for adding the tag to the list
+9.1.6 list of key-value attributes (optional) - similar to the list of tags but includes: 1) two input fields, one for entering the key, one for entering the value, 2) a button for adding the key-value pair, and 3) a list showing the pairs added.
+9.1.7 event name (optional): A short String field for identifying the name of an accosciated event or experiment.
+9.1.8 at the bottom of the form, there are two buttons labeled "Reset", "Save", and a combobox labeled "Other actions...".  These should be styled and colored in the style of the corresponding itmes on the Dataset Builder tab.  Handling for the buttons and actions for the combobox will be defined in a subsequent task.

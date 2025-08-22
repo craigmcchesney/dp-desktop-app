@@ -124,7 +124,9 @@ Tools → Annotate, Export, Upload, Console
 - ✅ Interactive LineChart with time-series visualization and mouse tracking tooltips
 - ✅ Dynamic data sampling and NumberAxis-based chart scaling
 - ✅ Global state synchronization between views for query parameters
-- 🔄 Annotation UI (planned)
+- ✅ Dataset Builder with data block management and save functionality
+- ✅ Cross-tab data transfer between Query Editor and Dataset Builder
+- 🔄 Annotation Builder UI (in development per SPECIFICATIONS.md section 9)
 - 🔄 Data export functionality (planned)
 
 ## GUI Architecture
@@ -165,6 +167,15 @@ The application follows the Model-View-ViewModel pattern:
 7. **Chart Visualization**: TabPane with Table and Chart views, LineChart with NumberAxis scaling
 8. **Interactive Features**: Mouse tracking tooltips, dynamic data sampling for performance
 
+### Dataset Builder Workflow (Implemented)
+1. **Dataset Configuration**: Enter dataset name (required), description (optional), and auto-generated ID field
+2. **Data Block Management**: Collect DataBlockDetail objects from Query Editor using "Add to Dataset" button
+3. **Data Block Operations**: Remove selected data blocks or view their details in Query Editor
+4. **Cross-Tab Navigation**: "View Data" button populates Query Editor fields and switches tabs
+5. **Dataset Persistence**: Save button validates inputs and calls DpApplication.saveDataSet() API
+6. **Validation & Feedback**: Real-time validation with status messages and button enable/disable logic
+7. **State Management**: Preserve dataset details across save operations and tab switches
+
 ### Key UI Components
 - **Spinner Binding**: Custom binding logic for time spinners to avoid JavaFX binding issues
 - **Dynamic ComboBoxes**: Attribute value combos populate based on selected keys
@@ -172,7 +183,9 @@ The application follows the Model-View-ViewModel pattern:
 - **Form Validation**: Real-time validation with status messages
 - **Responsive Layout**: GridPane with proper column constraints for label visibility
 - **Interactive Charts**: LineChart with NumberAxis, mouse tracking tooltips, dynamic data sampling
-- **TabPane Results**: Table and Chart views with shared data model and synchronized updates
+- **TabPane Architecture**: Multi-level TabPane structure with Query Editor/Dataset Builder and Table/Chart views
+- **Cross-Tab Data Transfer**: "Add to Dataset" and "View Data" buttons for seamless data flow between tabs
+- **Selection-Based UI**: ListView selections drive button enable/disable state using property binding
 
 ## Data Model
 
@@ -181,6 +194,13 @@ Represents process variable configuration:
 - PV name, data type (integer/float)
 - Sample period in milliseconds
 - Initial value and maximum step magnitude for random walk
+
+### DataBlockDetail (`src/main/java/com/ospreydcs/dp/gui/model/DataBlockDetail.java`)
+Represents a data block in the Dataset Builder:
+- List of PV names (List<String>)
+- Begin and end time (Instant objects)
+- Human-readable toString() format: "pv-1, pv-2, pv-3: 2025-08-15 11:03:00 -> 2025-08-15 11:05:00"
+- Used for dataset composition and cross-tab data transfer
 
 ### Global State Management
 `DpApplication` maintains cross-view state with automatic synchronization:
@@ -230,3 +250,15 @@ Represents process variable configuration:
 - Always use `java.time.ZoneId.systemDefault()` for timezone conversions
 - Call `spinner.commitValue()` before reading values to handle uncommitted edits
 - Use initialization flags to prevent listeners from firing during UI setup
+
+### API Integration Patterns
+- Always check `apiResult.resultStatus.isError` before processing API responses
+- Use `apiResult.resultStatus.msg` (not `.message`) for error messages
+- Handle null responses and exceptional results from gRPC services
+- Status messages should provide immediate user feedback during API operations
+
+### TabPane and Multi-View Coordination
+- Use `TabPane.getSelectionModel().select(tab)` for programmatic tab switching
+- Implement populateFromDataBlock() pattern for cross-view data transfer
+- ListView selection binding: `listView.getSelectionModel().selectedItemProperty()` for button states
+- Use shared ViewModel methods for coordinating data between tabs

@@ -7,6 +7,8 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.XYChart;
 // CategoryAxis import removed - using NumberAxis for both axes
@@ -93,10 +95,29 @@ public class DataQueryController implements Initializable {
     @FXML private Button saveDatasetButton;
     @FXML private ComboBox<String> datasetActionsCombo;
     @FXML private Label datasetStatusLabel;
+    
+    // Annotation Builder FXML components
+    @FXML private TextField annotationIdField;
+    @FXML private TextField annotationNameField;
+    @FXML private TextArea annotationCommentField;
+    @FXML private TextField annotationEventNameField;
+    @FXML private ListView<com.ospreydcs.dp.gui.model.DataSetDetail> targetDatasetsList;
+    @FXML private Button resetAnnotationButton;
+    @FXML private Button saveAnnotationButton;
+    @FXML private ComboBox<String> annotationActionsCombo;
+    @FXML private Label annotationStatusLabel;
+    
+    // Tags and Attributes container
+    @FXML private HBox tagsAttributesContainer;
+    
+    // Programmatically created components
+    private com.ospreydcs.dp.gui.component.TagsListComponent tagsComponent;
+    private com.ospreydcs.dp.gui.component.AttributesListComponent attributesComponent;
 
     // Dependencies
     private DataQueryViewModel viewModel;
     private DatasetBuilderViewModel datasetBuilderViewModel;
+    private AnnotationBuilderViewModel annotationBuilderViewModel;
     private DpApplication dpApplication;
     private Stage primaryStage;
     private MainController mainController;
@@ -111,12 +132,14 @@ public class DataQueryController implements Initializable {
         // Create the view models
         viewModel = new DataQueryViewModel();
         datasetBuilderViewModel = new DatasetBuilderViewModel();
+        annotationBuilderViewModel = new AnnotationBuilderViewModel();
         
         // Initialize UI components
         initializeSpinners();
         initializeRadioButtons();
         initializeChart();
         initializeDatasetBuilder();
+        initializeAnnotationBuilder();
         
         // Bind UI components to view model properties
         bindUIToViewModel();
@@ -169,6 +192,29 @@ public class DataQueryController implements Initializable {
         datasetActionsCombo.getItems().addAll("Load", "Annotate", "Export");
         
         logger.debug("Dataset Builder initialized");
+    }
+    
+    private void initializeAnnotationBuilder() {
+        // Set up the Target Datasets ListView
+        targetDatasetsList.setItems(annotationBuilderViewModel.getDataSets());
+        
+        // Populate the Annotation Actions ComboBox
+        annotationActionsCombo.getItems().addAll("Load", "Delete", "Export");
+        
+        // Create and initialize reusable components programmatically
+        tagsComponent = new com.ospreydcs.dp.gui.component.TagsListComponent();
+        attributesComponent = new com.ospreydcs.dp.gui.component.AttributesListComponent();
+        
+        // Bind component data to ViewModel
+        tagsComponent.setTags(annotationBuilderViewModel.getTags());
+        attributesComponent.setAttributes(annotationBuilderViewModel.getAttributes());
+        
+        // Add components to the container with proper sizing
+        HBox.setHgrow(tagsComponent, Priority.ALWAYS);
+        HBox.setHgrow(attributesComponent, Priority.ALWAYS);
+        tagsAttributesContainer.getChildren().addAll(tagsComponent, attributesComponent);
+        
+        logger.debug("Annotation Builder initialized with programmatic components");
     }
 
     private void bindUIToViewModel() {
@@ -252,6 +298,18 @@ public class DataQueryController implements Initializable {
         // Data blocks control buttons - enable when there's a selection
         removeDataBlockButton.disableProperty().bind(dataBlocksList.getSelectionModel().selectedItemProperty().isNull());
         viewDataBlockButton.disableProperty().bind(dataBlocksList.getSelectionModel().selectedItemProperty().isNull());
+        
+        // Annotation Builder bindings
+        annotationIdField.textProperty().bindBidirectional(annotationBuilderViewModel.annotationIdProperty());
+        annotationNameField.textProperty().bindBidirectional(annotationBuilderViewModel.annotationNameProperty());
+        annotationCommentField.textProperty().bindBidirectional(annotationBuilderViewModel.commentProperty());
+        annotationEventNameField.textProperty().bindBidirectional(annotationBuilderViewModel.eventNameProperty());
+        annotationStatusLabel.textProperty().bind(annotationBuilderViewModel.statusMessageProperty());
+        
+        // Annotation Button state bindings
+        resetAnnotationButton.disableProperty().bind(annotationBuilderViewModel.resetButtonEnabledProperty().not());
+        saveAnnotationButton.disableProperty().bind(annotationBuilderViewModel.saveButtonEnabledProperty().not());
+        annotationActionsCombo.disableProperty().bind(annotationBuilderViewModel.annotationActionsEnabledProperty().not());
     }
 
     private void setupEventHandlers() {
@@ -1034,6 +1092,48 @@ public class DataQueryController implements Initializable {
         } else {
             logger.warn("View data block requested but no selection");
         }
+    }
+    
+    // Annotation Builder event handlers
+    @FXML
+    private void onResetAnnotation() {
+        logger.info("Annotation reset requested");
+        annotationBuilderViewModel.resetAnnotation();
+    }
+    
+    @FXML
+    private void onSaveAnnotation() {
+        logger.info("Annotation save requested");
+        
+        // Step 1: Validation
+        String name = annotationBuilderViewModel.getAnnotationName();
+        if (name == null || name.trim().isEmpty()) {
+            annotationBuilderViewModel.statusMessageProperty().set("Annotation name is required");
+            logger.warn("Annotation save validation failed: name is empty");
+            return;
+        }
+        
+        if (annotationBuilderViewModel.getDataSets().isEmpty()) {
+            annotationBuilderViewModel.statusMessageProperty().set("Target datasets are required");
+            logger.warn("Annotation save validation failed: no target datasets");
+            return;
+        }
+        
+        // Step 2: Extract annotation details
+        String id = annotationBuilderViewModel.getAnnotationId();
+        String comment = annotationBuilderViewModel.getComment();
+        String eventName = annotationBuilderViewModel.getEventName();
+        var dataSets = new java.util.ArrayList<>(annotationBuilderViewModel.getDataSets());
+        var tags = new java.util.ArrayList<>(annotationBuilderViewModel.getTags());
+        var attributes = new java.util.ArrayList<>(annotationBuilderViewModel.getAttributes());
+        
+        logger.info("Saving annotation: id={}, name={}, comment={}, eventName={}, dataSets={}, tags={}, attributes={}", 
+                   id, name, comment, eventName, dataSets.size(), tags.size(), attributes.size());
+        
+        // Step 3: Call DpApplication.saveAnnotation() method (placeholder for now)
+        // TODO: Implement saveAnnotation API call when available
+        annotationBuilderViewModel.statusMessageProperty().set("Save functionality will be implemented when API is available");
+        logger.info("Annotation save completed (placeholder implementation)");
     }
     
     private void setupChartTooltipsWithRetry(int attemptCount) {

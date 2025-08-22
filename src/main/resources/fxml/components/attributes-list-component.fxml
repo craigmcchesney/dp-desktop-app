@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="10" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1">
+    <!-- Label -->
+    <Label fx:id="componentLabel" styleClass="control-label" text="Attributes:" />
+    
+    <!-- Input section -->
+    <HBox spacing="10" alignment="CENTER_LEFT">
+        <TextField fx:id="keyInput" promptText="Enter key" HBox.hgrow="ALWAYS" />
+        <TextField fx:id="valueInput" promptText="Enter value" HBox.hgrow="ALWAYS" />
+        <Button fx:id="addAttributeButton" styleClass="btn, btn-success" text="Add" />
+    </HBox>
+    
+    <!-- Attributes list -->
+    <ListView fx:id="attributesList" prefHeight="100.0" minHeight="60.0" maxHeight="150.0">
+        <placeholder>
+            <Label text="No attributes added yet." styleClass="text-muted" />
+        </placeholder>
+    </ListView>
+</VBox>
