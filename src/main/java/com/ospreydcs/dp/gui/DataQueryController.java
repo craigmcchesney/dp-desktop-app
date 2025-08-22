@@ -23,6 +23,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.ResourceBundle;
 
 public class DataQueryController implements Initializable {
@@ -93,6 +94,7 @@ public class DataQueryController implements Initializable {
     @FXML private Button viewDataBlockButton;
     @FXML private Button resetDatasetButton;
     @FXML private Button saveDatasetButton;
+    @FXML private Button addToAnnotationButton;
     @FXML private ComboBox<String> datasetActionsCombo;
     @FXML private Label datasetStatusLabel;
     
@@ -102,6 +104,7 @@ public class DataQueryController implements Initializable {
     @FXML private TextArea annotationCommentField;
     @FXML private TextField annotationEventNameField;
     @FXML private ListView<com.ospreydcs.dp.gui.model.DataSetDetail> targetDatasetsList;
+    @FXML private Button removeTargetDatasetButton;
     @FXML private Button resetAnnotationButton;
     @FXML private Button saveAnnotationButton;
     @FXML private ComboBox<String> annotationActionsCombo;
@@ -293,11 +296,15 @@ public class DataQueryController implements Initializable {
         // Button state bindings
         resetDatasetButton.disableProperty().bind(datasetBuilderViewModel.resetButtonEnabledProperty().not());
         saveDatasetButton.disableProperty().bind(datasetBuilderViewModel.saveButtonEnabledProperty().not());
+        addToAnnotationButton.disableProperty().bind(datasetBuilderViewModel.datasetIdProperty().isEmpty());
         datasetActionsCombo.disableProperty().bind(datasetBuilderViewModel.datasetActionsEnabledProperty().not());
         
         // Data blocks control buttons - enable when there's a selection
         removeDataBlockButton.disableProperty().bind(dataBlocksList.getSelectionModel().selectedItemProperty().isNull());
         viewDataBlockButton.disableProperty().bind(dataBlocksList.getSelectionModel().selectedItemProperty().isNull());
+        
+        // Target datasets control buttons - enable when there's a selection
+        removeTargetDatasetButton.disableProperty().bind(targetDatasetsList.getSelectionModel().selectedItemProperty().isNull());
         
         // Annotation Builder bindings
         annotationIdField.textProperty().bindBidirectional(annotationBuilderViewModel.annotationIdProperty());
@@ -1065,6 +1072,47 @@ public class DataQueryController implements Initializable {
     }
     
     @FXML
+    private void onAddToAnnotation() {
+        logger.info("Add to Annotation requested");
+        
+        // Extract current Dataset Builder form values
+        String id = datasetBuilderViewModel.getDatasetId();
+        String name = datasetBuilderViewModel.getDatasetName();
+        String description = datasetBuilderViewModel.getDatasetDescription();
+        var dataBlocks = new ArrayList<>(datasetBuilderViewModel.getDataBlocks());
+        
+        logger.info("Creating DataSetDetail: id={}, name={}, description={}, dataBlocks={}", 
+                   id, name, description, dataBlocks.size());
+        
+        // Create new DataSetDetail object
+        com.ospreydcs.dp.gui.model.DataSetDetail dataSetDetail = 
+            new com.ospreydcs.dp.gui.model.DataSetDetail(id, name, description, dataBlocks);
+        
+        // Check for duplicates by ID and handle appropriately
+        boolean isDuplicate = false;
+        for (int i = 0; i < annotationBuilderViewModel.getDataSets().size(); i++) {
+            com.ospreydcs.dp.gui.model.DataSetDetail existing = annotationBuilderViewModel.getDataSets().get(i);
+            if (existing.getId() != null && existing.getId().equals(id)) {
+                // Update existing entry instead of adding duplicate
+                annotationBuilderViewModel.getDataSets().set(i, dataSetDetail);
+                isDuplicate = true;
+                logger.info("Updated existing dataset in Annotation Builder: {}", id);
+                break;
+            }
+        }
+        
+        // Add to Annotation Builder Target Datasets if not a duplicate
+        if (!isDuplicate) {
+            annotationBuilderViewModel.getDataSets().add(dataSetDetail);
+            logger.info("Added new dataset to Annotation Builder: {}", id);
+        }
+        
+        // Switch to Annotation Builder tab (index 2 = third tab)
+        editorTabPane.getSelectionModel().select(2);
+        logger.info("Switched to Annotation Builder tab");
+    }
+    
+    @FXML
     private void onRemoveDataBlock() {
         com.ospreydcs.dp.gui.model.DataBlockDetail selectedBlock = dataBlocksList.getSelectionModel().getSelectedItem();
         if (selectedBlock != null) {
@@ -1095,6 +1143,35 @@ public class DataQueryController implements Initializable {
     }
     
     // Annotation Builder event handlers
+    
+    @FXML
+    private void onRemoveTargetDataset() {
+        com.ospreydcs.dp.gui.model.DataSetDetail selectedDataset = targetDatasetsList.getSelectionModel().getSelectedItem();
+        if (selectedDataset != null) {
+            // Store the current selected index before removal
+            int selectedIndex = targetDatasetsList.getSelectionModel().getSelectedIndex();
+            
+            // Remove the dataset
+            annotationBuilderViewModel.getDataSets().remove(selectedDataset);
+            logger.info("Removed target dataset: {} (ID: {})", selectedDataset.getName(), selectedDataset.getId());
+            
+            // Manage focus to prevent unwanted scrolling
+            if (!annotationBuilderViewModel.getDataSets().isEmpty()) {
+                // If there are remaining items, select the next logical item
+                int newIndex = Math.min(selectedIndex, annotationBuilderViewModel.getDataSets().size() - 1);
+                targetDatasetsList.getSelectionModel().select(newIndex);
+                // Keep focus on the ListView to prevent focus transfer
+                targetDatasetsList.requestFocus();
+            } else {
+                // If no items remain, clear selection but keep focus on ListView
+                targetDatasetsList.getSelectionModel().clearSelection();
+                targetDatasetsList.requestFocus();
+            }
+        } else {
+            logger.warn("Remove target dataset requested but no dataset selected");
+        }
+    }
+    
     @FXML
     private void onResetAnnotation() {
         logger.info("Annotation reset requested");

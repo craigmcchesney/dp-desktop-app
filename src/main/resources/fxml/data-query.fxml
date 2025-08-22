@@ -187,6 +187,7 @@
                             <HBox spacing="15" alignment="CENTER_LEFT">
                                 <Button fx:id="resetDatasetButton" text="Reset" styleClass="btn, btn-warning" disable="true" onAction="#onResetDataset" />
                                 <Button fx:id="saveDatasetButton" text="Save" styleClass="btn, btn-success" disable="true" onAction="#onSaveDataset" />
+                                <Button fx:id="addToAnnotationButton" text="Add to Annotation" styleClass="btn, btn-info" disable="true" onAction="#onAddToAnnotation" />
                                 <ComboBox fx:id="datasetActionsCombo" disable="true" promptText="Other actions..." />
                                 <Region HBox.hgrow="ALWAYS" />
                                 <Label fx:id="datasetStatusLabel" styleClass="text-muted" text="Ready to build dataset" />
@@ -246,11 +247,19 @@
                                 
                                 <Label styleClass="h4" text="🎯 Target Datasets *" />
                                 
-                                <ListView fx:id="targetDatasetsList" prefHeight="120.0">
-                                    <placeholder>
-                                        <Label text="Use the Dataset Builder to create and add Datasets." styleClass="text-muted" />
-                                    </placeholder>
-                                </ListView>
+                                <!-- Target Datasets List with Control Buttons -->
+                                <HBox spacing="10" alignment="CENTER_LEFT">
+                                    <ListView fx:id="targetDatasetsList" prefHeight="120.0" HBox.hgrow="ALWAYS">
+                                        <placeholder>
+                                            <Label text="Use the Dataset Builder to create and add Datasets." styleClass="text-muted" />
+                                        </placeholder>
+                                    </ListView>
+                                    <VBox spacing="5" minWidth="100">
+                                        <Button fx:id="removeTargetDatasetButton" text="Remove" 
+                                                styleClass="btn, btn-warning" disable="true" 
+                                                onAction="#onRemoveTargetDataset" maxWidth="Infinity" />
+                                    </VBox>
+                                </HBox>
                             </VBox>
                             
                             <!-- Tags and Attributes Section -->

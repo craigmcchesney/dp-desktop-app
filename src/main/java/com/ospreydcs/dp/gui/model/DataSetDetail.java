@@ -59,12 +59,21 @@ public class DataSetDetail {
     
     /**
      * Returns a formatted display string for this dataset.
-     * Format: "Dataset name - Description snippet - First data block display string"
-     * As specified in SPECIFICATIONS.md section 9.1.4
+     * Format: "ID: [dataset-id] - Dataset name - Description snippet - First data block display string"
+     * As specified in SPECIFICATIONS.md section 9.1.4 and 9.2.3
      */
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
+        
+        // Dataset ID
+        sb.append("ID: ");
+        if (id != null && !id.trim().isEmpty()) {
+            sb.append(id);
+        } else {
+            sb.append("[Unsaved]");
+        }
+        sb.append(" - ");
         
         // Dataset name
         if (name != null && !name.trim().isEmpty()) {

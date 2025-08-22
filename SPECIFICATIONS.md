@@ -248,3 +248,8 @@ Development of the demo GUI application will proceed according to the following 
 9.1.6 list of key-value attributes (optional) - similar to the list of tags but includes: 1) two input fields, one for entering the key, one for entering the value, 2) a button for adding the key-value pair, and 3) a list showing the pairs added.
 9.1.7 event name (optional): A short String field for identifying the name of an accosciated event or experiment.
 9.1.8 at the bottom of the form, there are two buttons labeled "Reset", "Save", and a combobox labeled "Other actions...".  These should be styled and colored in the style of the corresponding itmes on the Dataset Builder tab.  Handling for the buttons and actions for the combobox will be defined in a subsequent task.
+
+9.2 The next task for the "Annotation Builder" is a mechanism for adding datasets from the "Dataset Builder" to the "Annotation Builder".  We will add a button labeled "Add to Annotation" at the bottom of the "Dataset Builder" tab form, positioned between the "Save" button and "Other actions..." combobox.
+9.2.1 The button should be enabled when the Dataset that is the subject of the Dataset Builder has a non-null Dataset ID (e.g., it has been saved to the database).
+9.2.2 When the button is clicked, a DataSetDetail should be created for the contents of the Dataset Builder and added to the "Target Datasets" list in the "Annotation Builder".  The view should change so that the "Annotation Builder" tab is displayed.
+9.2.3 If there is not an id field in DataSetDetail, please add one.
