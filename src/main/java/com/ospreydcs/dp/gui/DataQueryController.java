@@ -1819,14 +1819,16 @@ public class DataQueryController implements Initializable {
                         return null;
                     }
                     
+                    // Wait for file to be fully written and stable
+                    if (!waitForFileStable(file)) {
+                        logger.warn("File may not be fully written yet, skipping auto-open: {}", filePath);
+                        return null;
+                    }
+                    
                     // Try to open with native application
                     Desktop desktop = Desktop.getDesktop();
                     if (desktop.isSupported(Desktop.Action.OPEN)) {
                         logger.info("Attempting to open file with native application: {}", filePath);
-                        
-                        // Add a small delay to let the export operation fully complete
-                        Thread.sleep(100);
-                        
                         desktop.open(file);
                         logger.info("Successfully initiated file opening with native application: {}", filePath);
                     } else {
@@ -1858,6 +1860,46 @@ public class DataQueryController implements Initializable {
         fileOpenThread.start();
         
         logger.debug("Started background thread to open file: {}", filePath);
+    }
+    
+    private boolean waitForFileStable(File file) {
+        try {
+            // Wait for file to be stable (not changing in size) for a short period
+            long lastSize = -1;
+            long stableTime = 0;
+            final long REQUIRED_STABLE_TIME = 500; // 500ms of stability required
+            final long MAX_WAIT_TIME = 5000; // Maximum 5 seconds to wait
+            final long CHECK_INTERVAL = 100; // Check every 100ms
+            
+            long startTime = System.currentTimeMillis();
+            
+            while (System.currentTimeMillis() - startTime < MAX_WAIT_TIME) {
+                long currentSize = file.length();
+                
+                if (currentSize == lastSize && currentSize > 0) {
+                    // File size is stable
+                    stableTime += CHECK_INTERVAL;
+                    if (stableTime >= REQUIRED_STABLE_TIME) {
+                        logger.info("File is stable ({}ms stable period): {} bytes", stableTime, currentSize);
+                        return true;
+                    }
+                } else {
+                    // File size changed, reset stability timer
+                    stableTime = 0;
+                    lastSize = currentSize;
+                    logger.debug("File size changed to: {} bytes", currentSize);
+                }
+                
+                Thread.sleep(CHECK_INTERVAL);
+            }
+            
+            logger.warn("File did not stabilize within {}ms, current size: {} bytes", MAX_WAIT_TIME, file.length());
+            return false;
+            
+        } catch (Exception e) {
+            logger.warn("Error waiting for file stability: {}", e.getMessage());
+            return false;
+        }
     }
     
     // Helper class to store original data point information for tooltips
