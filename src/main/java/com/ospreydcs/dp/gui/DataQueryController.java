@@ -239,6 +239,28 @@ public class DataQueryController implements Initializable {
         resultsContent.visibleProperty().bind(viewModel.showQueryResultsPanelProperty());
         resultsContent.managedProperty().bind(viewModel.showQueryResultsPanelProperty());
         
+        // Fix layout issue: when Query Results section is hidden, remove VGrow constraint so upper section can expand
+        viewModel.showQueryResultsPanelProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal) {
+                // Query Results visible: set VGrow to ALWAYS so it expands
+                VBox.setVgrow(queryResultsSection, Priority.ALWAYS);
+            } else {
+                // Query Results hidden: remove VGrow so upper section can use the space
+                VBox.setVgrow(queryResultsSection, Priority.NEVER);
+            }
+            
+            // Force layout recalculation to ensure space is properly redistributed
+            // This is critical for window resize scenarios
+            queryResultsSection.getParent().requestLayout();
+        });
+        
+        // Initialize the VGrow state based on current visibility
+        if (viewModel.showQueryResultsPanelProperty().get()) {
+            VBox.setVgrow(queryResultsSection, Priority.ALWAYS);
+        } else {
+            VBox.setVgrow(queryResultsSection, Priority.NEVER);
+        }
+        
         // Time range bindings
         queryBeginDatePicker.valueProperty().bindBidirectional(viewModel.queryBeginDateProperty());
         queryEndDatePicker.valueProperty().bindBidirectional(viewModel.queryEndDateProperty());
