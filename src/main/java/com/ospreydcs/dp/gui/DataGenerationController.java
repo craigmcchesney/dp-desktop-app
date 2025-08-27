@@ -48,7 +48,6 @@ public class DataGenerationController implements Initializable {
     @FXML private ComboBox<String> eventNameCombo;
 
     // PV Details FXML components
-    @FXML private Button addPvButton;
     @FXML private ListView<PvDetail> pvDetailsList;
     @FXML private VBox pvDetailEntryPanel;
     @FXML private TextField pvNameField;
@@ -56,8 +55,6 @@ public class DataGenerationController implements Initializable {
     @FXML private ComboBox<Integer> pvValuesPerSecondCombo;
     @FXML private TextField pvInitialValueField;
     @FXML private TextField pvMaxStepField;
-    @FXML private Button addPvDetailButton;
-    @FXML private Button cancelPvDetailButton;
 
     // Action buttons
     @FXML private Button generateButton;
@@ -118,8 +115,6 @@ public class DataGenerationController implements Initializable {
 
         // PV Details bindings
         pvDetailsList.setItems(viewModel.getPvDetails());
-        pvDetailEntryPanel.visibleProperty().bind(viewModel.showPvEntryPanelProperty());
-        pvDetailEntryPanel.managedProperty().bind(viewModel.showPvEntryPanelProperty());
         
         pvNameField.textProperty().bindBidirectional(viewModel.currentPvNameProperty());
         pvDataTypeCombo.valueProperty().bindBidirectional(viewModel.currentPvDataTypeProperty());
@@ -131,7 +126,6 @@ public class DataGenerationController implements Initializable {
 
         // Button state bindings
         generateButton.disableProperty().bind(viewModel.isGeneratingProperty());
-        addPvDetailButton.disableProperty().bind(viewModel.isGeneratingProperty());
     }
 
     private void setupEventHandlers() {
@@ -153,6 +147,9 @@ public class DataGenerationController implements Initializable {
                 }
             }
         });
+
+        // Set up automatic PV form submission
+        setupPvFormAutoSubmission();
 
         // Set up context menu for list items
         setupContextMenus();
@@ -343,6 +340,49 @@ public class DataGenerationController implements Initializable {
         logger.debug("Integer ComboBox binding completed");
     }
     
+    private void setupPvFormAutoSubmission() {
+        // Auto-submit when user presses Enter in any of the PV form fields
+        pvNameField.setOnAction(e -> attemptPvFormSubmission());
+        pvInitialValueField.setOnAction(e -> attemptPvFormSubmission());
+        pvMaxStepField.setOnAction(e -> attemptPvFormSubmission());
+        
+        // Auto-submit when user moves focus away from the last required field
+        pvMaxStepField.focusedProperty().addListener((obs, wasFocused, isFocused) -> {
+            if (wasFocused && !isFocused) { // Lost focus
+                attemptPvFormSubmission();
+            }
+        });
+        
+        logger.debug("PV form auto-submission handlers set up");
+    }
+    
+    private void attemptPvFormSubmission() {
+        // Only auto-submit if all required fields are filled
+        if (pvNameField.getText() != null && !pvNameField.getText().trim().isEmpty() &&
+            pvDataTypeCombo.getValue() != null &&
+            pvValuesPerSecondCombo.getValue() != null &&
+            pvInitialValueField.getText() != null && !pvInitialValueField.getText().trim().isEmpty() &&
+            pvMaxStepField.getText() != null && !pvMaxStepField.getText().trim().isEmpty()) {
+            
+            logger.debug("Auto-submitting PV form");
+            
+            // Store the current PV name to check if addition was successful
+            String currentPvName = pvNameField.getText().trim();
+            
+            // Attempt to add the PV
+            viewModel.addCurrentPvDetail();
+            
+            // If the form was cleared (indicating successful addition), move focus back to PV Name field
+            if (pvNameField.getText() == null || pvNameField.getText().trim().isEmpty()) {
+                // Use Platform.runLater to ensure the focus change happens after the form is cleared
+                javafx.application.Platform.runLater(() -> {
+                    pvNameField.requestFocus();
+                    logger.debug("Moved focus back to PV Name field for next entry");
+                });
+            }
+        }
+    }
+    
     private void setupStatusListener() {
         // Connect ViewModel status messages to MainController status display
         if (viewModel != null && mainController != null) {
@@ -443,21 +483,8 @@ public class DataGenerationController implements Initializable {
         }
     }
 
-    // PV Details action handlers
-    @FXML
-    private void onAddPv() {
-        viewModel.showPvEntryPanel();
-    }
-
-    @FXML
-    private void onAddPvDetail() {
-        viewModel.addCurrentPvDetail();
-    }
-
-    @FXML
-    private void onCancelPvDetail() {
-        viewModel.hidePvEntryPanel();
-    }
+    // PV Details action handlers - form is always visible now
+    // User adds PV by pressing Enter or clicking away from fields when valid
 
     // Main action handlers
     @FXML

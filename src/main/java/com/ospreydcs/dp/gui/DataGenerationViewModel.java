@@ -48,8 +48,7 @@ public class DataGenerationViewModel {
     private final StringProperty currentPvInitialValue = new SimpleStringProperty();
     private final StringProperty currentPvMaxStep = new SimpleStringProperty();
 
-    // UI state properties
-    private final BooleanProperty showPvEntryPanel = new SimpleBooleanProperty(false);
+    // UI state properties - PV entry panel is always visible now
     
     // Status properties
     private final StringProperty statusMessage = new SimpleStringProperty("Ready to generate data");
@@ -116,8 +115,7 @@ public class DataGenerationViewModel {
     public StringProperty currentPvInitialValueProperty() { return currentPvInitialValue; }
     public StringProperty currentPvMaxStepProperty() { return currentPvMaxStep; }
 
-    // UI state property getters
-    public BooleanProperty showPvEntryPanelProperty() { return showPvEntryPanel; }
+    // UI state property getters - no longer needed since panel always visible
 
     // Status property getters
     public StringProperty statusMessageProperty() { return statusMessage; }
@@ -187,15 +185,10 @@ public class DataGenerationViewModel {
         logger.debug("Removed request attribute: {}", attribute);
     }
 
-    public void showPvEntryPanel() {
+    // PV entry panel methods - simplified since panel is always visible
+    public void clearPvEntryForm() {
         clearCurrentPvEntry();
-        showPvEntryPanel.set(true);
-        logger.debug("Showing PV entry panel");
-    }
-
-    public void hidePvEntryPanel() {
-        showPvEntryPanel.set(false);
-        logger.debug("Hiding PV entry panel");
+        logger.debug("Cleared PV entry form");
     }
 
     public void addCurrentPvDetail() {
@@ -212,7 +205,8 @@ public class DataGenerationViewModel {
             if (!pvDetails.contains(pvDetail)) {
                 pvDetails.add(pvDetail);
                 logger.info("Added PV detail: {}", pvDetail.getPvName());
-                hidePvEntryPanel();
+                clearCurrentPvEntry(); // Clear form for next entry
+                statusMessage.set("PV added: " + pvDetail.getPvName());
             } else {
                 logger.warn("PV with name {} already exists", pvDetail.getPvName());
                 statusMessage.set("PV with this name already exists");
