@@ -272,3 +272,11 @@ Development of the demo GUI application will proceed according to the following 
 10.0.7 The application should try to launch the file using the native application using the JavaFX Desktop class methods, using 1) isDesktopSupported() to determine if we should try to open the file, 2) creating a Java File object from the filePath, and 33) using Desktop.getDesktop().open() to open the Java file.
 10.0.8 the working directories are 1) ~/dp.fork/dp-java/dp-grpc for the API definition including things like CalculationsSpec and ExportOutputFormat and 2) ~/dp.fork/dp-java/dp-service for the
 client API definition including things like ExportDataApiResult and AnnotationClient.
+
+11. The next task is to add a mechanism to the "Annotation Builder" for importing user-defined Calculations from Excel xlsx spreadsheet files.
+
+11.1 First we will modify the view to include elements for importing and displaying Calculations on the "Annotation Builder". 
+A new section will be added to the Annotation Builder for importing and viewing details for the Annotation's Calculations.  The new section will appear below the "Tags" and "Attributes" components, and above the button panel. 
+The model for the Calculations section will be the new class CalculationsDetails, which should have fields for 1) a String id and 2) a list of DataFrameDetails objects. The new class DataFrameDetails should include fields for 1) a String name, 2) a list of protobuf Timestamp objects (working directory for API objects is ~/dp.fork/dp-java/dp-grpc), and 3) a list of protobuf DataColumn objects.
+The new section will include a list box labeled "Calculations Data Frames" and marked as required.  The field will display the list of DataFrameDetails from the Builder's CalculationsDetails using the display string for each item in the list.  The display string for each DataFrameDetails should include frame name plus an abbreviated or truncated list of the frame's DataColumn names.
+To the right of the list box should be a panel of vertically arranged buttons labeled "Import", "View", and "Remove".  The "Remove" button should remove DataFrameDetails from the list and should only be enabled when the list selection is non-null.  Handling for the other buttons will be defined in the subsequent task.

@@ -1,6 +1,7 @@
 package com.ospreydcs.dp.gui;
 
 import com.ospreydcs.dp.gui.model.DataSetDetail;
+import com.ospreydcs.dp.gui.model.DataFrameDetails;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -23,6 +24,9 @@ public class AnnotationBuilderViewModel {
     
     // Target datasets
     private final ObservableList<DataSetDetail> dataSets = FXCollections.observableArrayList();
+    
+    // Calculations data frames
+    private final ObservableList<DataFrameDetails> calculationsDataFrames = FXCollections.observableArrayList();
     
     // Tags and attributes - managed by reusable components
     private final ObservableList<String> tags = FXCollections.observableArrayList();
@@ -160,6 +164,8 @@ public class AnnotationBuilderViewModel {
     public void setEventName(String eventName) { this.eventName.set(eventName != null ? eventName : ""); }
     
     public ObservableList<DataSetDetail> getDataSets() { return dataSets; }
+    
+    public ObservableList<DataFrameDetails> getCalculationsDataFrames() { return calculationsDataFrames; }
     
     public ObservableList<String> getTags() { return tags; }
     public ObservableList<String> getAttributes() { return attributes; }

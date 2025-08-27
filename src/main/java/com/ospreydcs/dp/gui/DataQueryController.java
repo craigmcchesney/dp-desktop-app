@@ -33,6 +33,13 @@ import java.util.Objects;
 import java.util.ResourceBundle;
 
 import com.ospreydcs.dp.gui.model.DataSetDetail;
+import com.ospreydcs.dp.gui.model.DataFrameDetails;
+import com.ospreydcs.dp.grpc.v1.common.DataColumn;
+import com.ospreydcs.dp.grpc.v1.common.DataValue;
+import com.ospreydcs.dp.grpc.v1.common.Timestamp;
+import com.ospreydcs.dp.client.utility.DataImportUtility;
+import com.ospreydcs.dp.client.result.DataImportResult;
+
 
 public class DataQueryController implements Initializable {
 
@@ -117,6 +124,12 @@ public class DataQueryController implements Initializable {
     @FXML private Button saveAnnotationButton;
     @FXML private ComboBox<String> annotationActionsCombo;
     @FXML private Label annotationStatusLabel;
+    
+    // Calculations FXML components
+    @FXML private ListView<com.ospreydcs.dp.gui.model.DataFrameDetails> calculationsDataFramesList;
+    @FXML private Button importCalculationsButton;
+    @FXML private Button viewCalculationsButton;
+    @FXML private Button removeCalculationsButton;
     
     // Tags and Attributes container
     @FXML private HBox tagsAttributesContainer;
@@ -349,6 +362,11 @@ public class DataQueryController implements Initializable {
         resetAnnotationButton.disableProperty().bind(annotationBuilderViewModel.resetButtonEnabledProperty().not());
         saveAnnotationButton.disableProperty().bind(annotationBuilderViewModel.saveButtonEnabledProperty().not());
         annotationActionsCombo.disableProperty().bind(annotationBuilderViewModel.annotationActionsEnabledProperty().not());
+        
+        // Calculations bindings
+        calculationsDataFramesList.setItems(annotationBuilderViewModel.getCalculationsDataFrames());
+        viewCalculationsButton.disableProperty().bind(calculationsDataFramesList.getSelectionModel().selectedItemProperty().isNull());
+        removeCalculationsButton.disableProperty().bind(calculationsDataFramesList.getSelectionModel().selectedItemProperty().isNull());
     }
 
     private void setupEventHandlers() {
@@ -1317,6 +1335,113 @@ public class DataQueryController implements Initializable {
         }
     }
     
+    @FXML
+    private void onImportCalculations() {
+        logger.info("Import calculations requested");
+        
+        // Create file chooser for Excel files
+        javafx.stage.FileChooser fileChooser = new javafx.stage.FileChooser();
+        fileChooser.setTitle("Select Excel File for Calculations Import");
+        fileChooser.getExtensionFilters().add(
+            new javafx.stage.FileChooser.ExtensionFilter("Excel Files", "*.xlsx", "*.xls")
+        );
+        
+        // Show file dialog
+        java.io.File selectedFile = fileChooser.showOpenDialog(primaryStage);
+        if (selectedFile != null) {
+            logger.info("Excel file selected for import: {}", selectedFile.getAbsolutePath());
+            
+            try {
+                // Use the shared DataImportUtility to import Excel data
+                DataImportResult importResult = DataImportUtility.importXlsxData(selectedFile.getAbsolutePath());
+                
+                if (importResult.resultStatus.isError) {
+                    String errorMessage = "Failed to import calculations: " + importResult.resultStatus.msg;
+                    annotationBuilderViewModel.statusMessageProperty().set(errorMessage);
+                    logger.error("Failed to import calculations from Excel file: {}", importResult.resultStatus.msg);
+                } else {
+                    // Create DataFrameDetails from all imported sheets
+                    List<DataFrameDetails> importedFrames = new ArrayList<>();
+                    
+                    for (DataImportResult.DataFrameResult frameResult : importResult.dataFrames) {
+                        DataFrameDetails frame = new DataFrameDetails(
+                            frameResult.sheetName, 
+                            frameResult.timestamps, 
+                            frameResult.columns
+                        );
+                        importedFrames.add(frame);
+                    }
+                    
+                    // Add all imported frames to the list
+                    annotationBuilderViewModel.getCalculationsDataFrames().addAll(importedFrames);
+                    
+                    String successMessage = String.format("Successfully imported %d calculation frame(s) from %s", 
+                        importedFrames.size(),
+                        selectedFile.getName());
+                    annotationBuilderViewModel.statusMessageProperty().set(successMessage);
+                    logger.info("Successfully imported {} calculation frame(s) from {}", 
+                        importedFrames.size(), selectedFile.getName());
+                        
+                    // Log details for each frame
+                    for (DataFrameDetails frame : importedFrames) {
+                        logger.debug("  Frame '{}': {} timestamps, {} columns", 
+                            frame.getName(),
+                            frame.getTimestamps() != null ? frame.getTimestamps().size() : 0,
+                            frame.getDataColumns() != null ? frame.getDataColumns().size() : 0);
+                    }
+                }
+                
+            } catch (Exception e) {
+                String errorMessage = "Failed to import calculations: " + e.getMessage();
+                annotationBuilderViewModel.statusMessageProperty().set(errorMessage);
+                logger.error("Failed to import calculations from Excel file: {}", selectedFile.getName(), e);
+            }
+        } else {
+            logger.info("Excel file import cancelled by user");
+        }
+    }
+    
+    @FXML
+    private void onViewCalculations() {
+        DataFrameDetails selectedFrame = calculationsDataFramesList.getSelectionModel().getSelectedItem();
+        if (selectedFrame != null) {
+            logger.info("View calculations requested for frame: {}", selectedFrame.getName());
+            
+            // Create and show a dialog with calculation details
+            showCalculationsDetailsDialog(selectedFrame);
+        } else {
+            logger.warn("View calculations requested but no frame selected");
+        }
+    }
+    
+    @FXML
+    private void onRemoveCalculations() {
+        DataFrameDetails selectedFrame = calculationsDataFramesList.getSelectionModel().getSelectedItem();
+        if (selectedFrame != null) {
+            // Store the current selected index before removal
+            int selectedIndex = calculationsDataFramesList.getSelectionModel().getSelectedIndex();
+            
+            // Remove the data frame
+            annotationBuilderViewModel.getCalculationsDataFrames().remove(selectedFrame);
+            logger.info("Removed calculations data frame: {}", selectedFrame.getName());
+            
+            // Manage focus to prevent unwanted scrolling
+            if (!annotationBuilderViewModel.getCalculationsDataFrames().isEmpty()) {
+                // If there are remaining items, select the next logical item
+                int newIndex = Math.min(selectedIndex, annotationBuilderViewModel.getCalculationsDataFrames().size() - 1);
+                calculationsDataFramesList.getSelectionModel().select(newIndex);
+                // Keep focus on the ListView to prevent focus transfer
+                calculationsDataFramesList.requestFocus();
+            } else {
+                // If no items remain, clear selection but keep focus on ListView
+                calculationsDataFramesList.getSelectionModel().clearSelection();
+                calculationsDataFramesList.requestFocus();
+            }
+        } else {
+            logger.warn("Remove calculations requested but no frame selected");
+        }
+    }
+    
     private void setupChartTooltipsWithRetry(int attemptCount) {
         final int MAX_ATTEMPTS = 10;
         final int DELAY_MS = 100;
@@ -1921,6 +2046,113 @@ public class DataQueryController implements Initializable {
         } catch (Exception e) {
             logger.warn("Error waiting for file stability: {}", e.getMessage());
             return false;
+        }
+    }
+    
+    /**
+     * Shows a dialog with details about the selected calculation frame.
+     */
+    private void showCalculationsDetailsDialog(DataFrameDetails frame) {
+        // Create dialog
+        javafx.scene.control.Dialog<Void> dialog = new javafx.scene.control.Dialog<>();
+        dialog.setTitle("Calculation Frame Details");
+        dialog.setHeaderText("Details for: " + frame.getName());
+        dialog.getDialogPane().getButtonTypes().add(javafx.scene.control.ButtonType.CLOSE);
+        
+        // Create content
+        javafx.scene.control.TextArea contentArea = new javafx.scene.control.TextArea();
+        contentArea.setEditable(false);
+        contentArea.setWrapText(true);
+        contentArea.setPrefSize(600, 400);
+        
+        StringBuilder content = new StringBuilder();
+        content.append("Frame Name: ").append(frame.getName()).append("\n\n");
+        
+        // Add timestamp information
+        if (frame.getTimestamps() != null && !frame.getTimestamps().isEmpty()) {
+            content.append("Timestamps: ").append(frame.getTimestamps().size()).append(" entries\n");
+            content.append("First timestamp: ").append(formatTimestamp(frame.getTimestamps().get(0))).append("\n");
+            if (frame.getTimestamps().size() > 1) {
+                content.append("Last timestamp: ").append(formatTimestamp(frame.getTimestamps().get(frame.getTimestamps().size() - 1))).append("\n");
+            }
+        } else {
+            content.append("Timestamps: None\n");
+        }
+        content.append("\n");
+        
+        // Add column information
+        if (frame.getDataColumns() != null && !frame.getDataColumns().isEmpty()) {
+            content.append("Data Columns (").append(frame.getDataColumns().size()).append("):\n");
+            for (int i = 0; i < frame.getDataColumns().size(); i++) {
+                DataColumn column = frame.getDataColumns().get(i);
+                content.append(String.format("  %d. %s (%d values)\n", 
+                    i + 1, 
+                    column.getName(), 
+                    column.getDataValuesCount()));
+                
+                // Show first few values as sample
+                if (column.getDataValuesCount() > 0) {
+                    content.append("     Sample values: ");
+                    int sampleCount = Math.min(3, column.getDataValuesCount());
+                    for (int j = 0; j < sampleCount; j++) {
+                        if (j > 0) content.append(", ");
+                        content.append(formatDataValue(column.getDataValues(j)));
+                    }
+                    if (column.getDataValuesCount() > 3) {
+                        content.append("...");
+                    }
+                    content.append("\n");
+                }
+            }
+        } else {
+            content.append("Data Columns: None\n");
+        }
+        
+        contentArea.setText(content.toString());
+        dialog.getDialogPane().setContent(contentArea);
+        
+        // Show dialog
+        dialog.showAndWait();
+    }
+    
+    /**
+     * Formats a timestamp for display.
+     */
+    private String formatTimestamp(Timestamp timestamp) {
+        try {
+            java.time.Instant instant = java.time.Instant.ofEpochSecond(
+                timestamp.getEpochSeconds(), 
+                timestamp.getNanoseconds()
+            );
+            return instant.toString();
+        } catch (Exception e) {
+            return "Invalid timestamp";
+        }
+    }
+    
+    /**
+     * Formats a DataValue for display.
+     */
+    private String formatDataValue(DataValue dataValue) {
+        try {
+            switch (dataValue.getValueCase()) {
+                case STRINGVALUE:
+                    return "\"" + dataValue.getStringValue() + "\"";
+                case DOUBLEVALUE:
+                    return String.format("%.3f", dataValue.getDoubleValue());
+                case BOOLEANVALUE:
+                    return String.valueOf(dataValue.getBooleanValue());
+                case INTVALUE:
+                    return String.valueOf(dataValue.getIntValue());
+                case ULONGVALUE:
+                    return String.valueOf(dataValue.getUlongValue());
+                case UINTVALUE:
+                    return String.valueOf(dataValue.getUintValue());
+                default:
+                    return "Unknown";
+            }
+        } catch (Exception e) {
+            return "Error";
         }
     }
     

@@ -265,6 +265,35 @@
                             <!-- Tags and Attributes Section -->
                             <HBox fx:id="tagsAttributesContainer" spacing="20"></HBox>
                             
+                            <!-- Calculations Section -->
+                            <VBox spacing="15" styleClass="well">
+                                <padding>
+                                    <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+                                </padding>
+                                
+                                <Label styleClass="h4" text="🧮 Calculations Data Frames" />
+                                
+                                <!-- Calculations List with Control Buttons -->
+                                <HBox spacing="10" alignment="CENTER_LEFT">
+                                    <ListView fx:id="calculationsDataFramesList" prefHeight="120.0" HBox.hgrow="ALWAYS">
+                                        <placeholder>
+                                            <Label text="Use the Import button to import calculations from Excel files." styleClass="text-muted" />
+                                        </placeholder>
+                                    </ListView>
+                                    <VBox spacing="5" minWidth="100">
+                                        <Button fx:id="importCalculationsButton" text="Import" 
+                                                styleClass="btn, btn-primary" 
+                                                onAction="#onImportCalculations" maxWidth="Infinity" />
+                                        <Button fx:id="viewCalculationsButton" text="View" 
+                                                styleClass="btn, btn-info" disable="true" 
+                                                onAction="#onViewCalculations" maxWidth="Infinity" />
+                                        <Button fx:id="removeCalculationsButton" text="Remove" 
+                                                styleClass="btn, btn-warning" disable="true" 
+                                                onAction="#onRemoveCalculations" maxWidth="Infinity" />
+                                    </VBox>
+                                </HBox>
+                            </VBox>
+                            
                             <!-- Action Buttons -->
                             <HBox spacing="15" alignment="CENTER_LEFT">
                                 <Button fx:id="resetAnnotationButton" text="Reset" styleClass="btn, btn-warning" disable="true" onAction="#onResetAnnotation" />
