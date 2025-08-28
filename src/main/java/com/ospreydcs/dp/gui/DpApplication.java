@@ -7,21 +7,21 @@ import com.ospreydcs.dp.client.QueryClient;
 import com.ospreydcs.dp.client.result.*;
 import com.ospreydcs.dp.grpc.v1.annotation.ExportDataRequest;
 import com.ospreydcs.dp.grpc.v1.common.CalculationsSpec;
+import com.ospreydcs.dp.grpc.v1.common.Timestamp;
 import com.ospreydcs.dp.grpc.v1.ingestion.RegisterProviderResponse;
 import com.ospreydcs.dp.grpc.v1.query.QueryTableRequest;
 import com.ospreydcs.dp.gui.model.DataBlockDetail;
 import com.ospreydcs.dp.gui.model.PvDetail;
 import com.ospreydcs.dp.service.common.model.ResultStatus;
 import com.ospreydcs.dp.service.common.protobuf.EventMetadataUtility;
+import com.ospreydcs.dp.service.common.protobuf.TimestampUtility;
 import com.ospreydcs.dp.service.inprocess.InprocessServiceEcosystem;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class DpApplication {
 
@@ -165,6 +165,74 @@ public class DpApplication {
                 // Shouldn't reach here, but handle unexpected response structure
                 return new ResultStatus(true, "Unexpected response structure from provider registration");
             }
+        }
+    }
+
+    public ResultStatus ingestImportedData(
+            List<String> tags,
+            Map<String, String> attributes,
+            String eventName,
+            List<DataImportResult.DataFrameResult> dataFrames
+    ) {
+        if (providerId == null) {
+            return new ResultStatus(true, "Provider must be registered before ingesting data");
+        }
+
+        try {
+            // send an ingestData() request for each frame
+            final Set<String> pvNames = new HashSet<>();
+            Instant minBeginInstant = null;
+            Instant maxEndInstant = null;
+            int requestCount = 0;
+            for (DataImportResult.DataFrameResult frame : dataFrames) {
+
+                final String requestId = java.util.UUID.randomUUID().toString();
+
+                final IngestionClient.IngestionRequestParams params = new IngestionClient.IngestionRequestParams(
+                        this.providerId,                   // providerId
+                        requestId,                         // requestId
+                        tags,                              // tags
+                        attributes,                        // attributes
+                        eventName                          // eventDescription
+                );
+
+                // Call ingestData() API method
+                final IngestDataApiResult apiResult = api.ingestionClient.ingestData(
+                        params,
+                        frame.timestamps,
+                        frame.columns);
+                requestCount++;
+
+                if (apiResult.resultStatus.isError) {
+                    return apiResult.resultStatus;
+                }
+
+                // add pv names for frame to list of unique pv names ingested for imported file
+                pvNames.addAll(frame.columns.stream().map(col -> col.getName()).collect(Collectors.toList()));
+
+                // update min begin / max end times ingested for imported file
+                final Instant frameBeginInstant = TimestampUtility.instantFromTimestamp(frame.timestamps.getFirst());
+                if (minBeginInstant == null || frameBeginInstant.isBefore(minBeginInstant)) {
+                    minBeginInstant = frameBeginInstant;
+                }
+                final Instant frameEndInstant = TimestampUtility.instantFromTimestamp(frame.timestamps.getLast());
+                if (maxEndInstant == null || frameEndInstant.isAfter(maxEndInstant)) {
+                    maxEndInstant = frameEndInstant;
+                }
+            }
+
+            final List<String> sortedPvNames = pvNames.stream().sorted().collect(Collectors.toList());
+
+            setPvNames(sortedPvNames);
+            this.dataBeginTime = minBeginInstant;
+            this.dataEndTime = maxEndInstant;
+
+            return new ResultStatus(false, "Successfully ingested imported data for PVs: " + sortedPvNames
+                    + " in " + requestCount + " ingestData() requests begin time: "
+                    + minBeginInstant + " and end time: " + maxEndInstant);
+
+        } catch (Exception e) {
+            return new ResultStatus(true, "Error during data generation: " + e.getMessage());
         }
     }
 
