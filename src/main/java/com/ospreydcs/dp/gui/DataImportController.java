@@ -50,6 +50,10 @@ public class DataImportController implements Initializable {
         // Bind UI components to view model properties
         bindUIToViewModel();
         
+        // Inject component references into ViewModel (Critical Integration Pattern)
+        viewModel.setProviderDetailsComponent(providerDetailsComponent);
+        viewModel.setRequestDetailsComponent(requestDetailsComponent);
+        
         // Set up event handlers
         setupEventHandlers();
         
@@ -60,13 +64,11 @@ public class DataImportController implements Initializable {
         // Provider Details component bindings
         providerDetailsComponent.providerNameProperty().bindBidirectional(viewModel.providerNameProperty());
         providerDetailsComponent.providerDescriptionProperty().bindBidirectional(viewModel.providerDescriptionProperty());
-        providerDetailsComponent.setProviderTags(viewModel.getProviderTags());
-        providerDetailsComponent.setProviderAttributes(viewModel.getProviderAttributes());
+        // Note: Tags and attributes are managed internally by components
 
         // Request Details component bindings
-        requestDetailsComponent.setRequestTags(viewModel.getRequestTags());
-        requestDetailsComponent.setRequestAttributes(viewModel.getRequestAttributes());
         requestDetailsComponent.eventNameProperty().bindBidirectional(viewModel.eventNameProperty());
+        // Note: Tags and attributes are managed internally by components
 
         // Import Details bindings
         filePathField.textProperty().bindBidirectional(viewModel.filePathProperty());

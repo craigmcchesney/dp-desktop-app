@@ -230,9 +230,7 @@ public class DataExploreController implements Initializable {
         tagsComponent = new com.ospreydcs.dp.gui.component.TagsListComponent();
         attributesComponent = new com.ospreydcs.dp.gui.component.AttributesListComponent();
         
-        // Bind component data to ViewModel
-        tagsComponent.setTags(annotationBuilderViewModel.getTags());
-        attributesComponent.setAttributes(annotationBuilderViewModel.getAttributes());
+        // Note: Components manage their own data internally - no need to bind from ViewModel
         
         // Add components to the container with proper sizing
         HBox.setHgrow(tagsComponent, Priority.ALWAYS);

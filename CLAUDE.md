@@ -374,6 +374,23 @@ The application uses a hub-and-spoke navigation model:
 - **State Synchronization**: Global state updates trigger menu enablement and home view updates
 - **Background Operations**: Long-running operations use JavaFX Task with UI thread synchronization
 
+### Component Data Access Anti-Pattern (Critical)
+**NEVER access reusable component data through ViewModel properties.** This is the most common architectural error in this codebase:
+
+```java
+// ❌ WRONG - This pattern will result in empty data being passed to APIs
+Map<String, String> attrs = convertAttributesToMap(viewModel.getProviderAttributes()); // Empty!
+List<String> tags = List.copyOf(viewModel.getProviderTags()); // Empty!
+
+// ✅ CORRECT - Always get data directly from component instances
+Map<String, String> attrs = convertAttributesToMap(providerComponent.getProviderAttributes());
+List<String> tags = List.copyOf(providerComponent.getProviderTags());
+```
+
+**Why this happens**: Reusable components manage their own internal state. ViewModel properties are only used for property binding, not data storage. The components never populate the ViewModel properties with their data.
+
+**Required pattern**: Always inject component references into ViewModels and access data directly from component instances before API calls.
+
 ## Common Development Patterns
 
 ### Adding New Views
@@ -423,6 +440,15 @@ The application uses a hub-and-spoke navigation model:
 - Handle null responses and exceptional results from gRPC services
 - Status messages should provide immediate user feedback during API operations
 
+### Debugging Component Data Issues
+When tags/attributes don't appear in the database:
+
+1. **Check API calls**: Log the actual parameters being passed to `registerProvider()` and `ingestImportedData()`
+2. **Verify component injection**: Ensure ViewModel has non-null component references
+3. **Trace data flow**: Components → ViewModel API methods → DpApplication → gRPC services
+4. **Common symptoms**: Empty lists/maps in API parameters despite UI having data
+5. **Root cause**: Usually accessing `viewModel.getTags()` instead of `component.getTags()`
+
 ### TabPane and Multi-View Coordination
 - Use `TabPane.getSelectionModel().select(tab)` for programmatic tab switching
 - Implement populateFromDataBlock() pattern for cross-view data transfer
@@ -457,18 +483,36 @@ The application uses a hub-and-spoke navigation model:
 - Data access: `getRequestTags()`, `getRequestAttributes()`
 - Lifecycle method: `clearRequestDetails()`
 
-**Critical Integration Pattern:**
-When using reusable components, get data from component instances directly:
+**Critical Integration Pattern Implementation:**
+When using reusable components, you MUST inject component references into ViewModels:
+
 ```java
-// Correct - get from component instances
-var tags = tagsComponent.getTags();
-var attributes = attributesComponent.getAttributes();
-var providerTags = providerDetailsComponent.getProviderTags();
+// In Controller.initialize()
+viewModel.setProviderDetailsComponent(providerDetailsComponent);
+viewModel.setRequestDetailsComponent(requestDetailsComponent);
+
+// In ViewModel - add component references
+private ProviderDetailsComponent providerDetailsComponent;
+private RequestDetailsComponent requestDetailsComponent;
+
+// In API calls - get data from component instances
+var tags = providerDetailsComponent.getProviderTags();
+var attributes = providerDetailsComponent.getProviderAttributes();
 var eventName = requestDetailsComponent.getEventName();
 
-// Incorrect - parent ViewModels return empty lists
+// NEVER do this - ViewModel properties stay empty
 var tags = viewModel.getTags(); // Empty!
 var attributes = viewModel.getAttributes(); // Empty!
+```
+
+**Component Binding Pattern:**
+```java
+// ✅ CORRECT - Only bind simple properties, let components manage complex data
+providerDetailsComponent.providerNameProperty().bindBidirectional(viewModel.providerNameProperty());
+// Note: Tags and attributes are managed internally by components
+
+// ❌ WRONG - Never try to populate components from ViewModel collections
+providerDetailsComponent.setProviderTags(viewModel.getProviderTags()); // Empty!
 ```
 
 ### Excel Import Integration

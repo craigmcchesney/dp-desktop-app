@@ -56,6 +56,10 @@ public class DataGenerationViewModel {
 
     private DpApplication dpApplication;
     private MainController mainController;
+    
+    // Component references for accessing component data
+    private com.ospreydcs.dp.gui.component.ProviderDetailsComponent providerDetailsComponent;
+    private com.ospreydcs.dp.gui.component.RequestDetailsComponent requestDetailsComponent;
 
     public DataGenerationViewModel() {
         logger.debug("DataGenerationViewModel initialized");
@@ -69,6 +73,17 @@ public class DataGenerationViewModel {
     public void setMainController(MainController mainController) {
         this.mainController = mainController;
         logger.debug("MainController injected into DataGenerationViewModel");
+    }
+    
+    // Component injection methods
+    public void setProviderDetailsComponent(com.ospreydcs.dp.gui.component.ProviderDetailsComponent component) {
+        this.providerDetailsComponent = component;
+        logger.debug("ProviderDetailsComponent injected into DataGenerationViewModel");
+    }
+    
+    public void setRequestDetailsComponent(com.ospreydcs.dp.gui.component.RequestDetailsComponent component) {
+        this.requestDetailsComponent = component;
+        logger.debug("RequestDetailsComponent injected into DataGenerationViewModel");
     }
 
     // Provider Details property getters
@@ -236,6 +251,12 @@ public class DataGenerationViewModel {
             return;
         }
         
+        // Validate components are available
+        if (providerDetailsComponent == null || requestDetailsComponent == null) {
+            statusMessage.set("Component references not set - cannot access form data");
+            return;
+        }
+        
         if (dpApplication == null) {
             statusMessage.set("DpApplication not initialized");
             return;
@@ -246,14 +267,17 @@ public class DataGenerationViewModel {
         
         try {
             logger.info("Starting data generation for {} PVs", pvDetails.size());
-            logger.info("Provider: {}", providerName.get());
+            logger.info("Provider: {}", providerDetailsComponent.getProviderName());
             logger.info("Time range: {} to {}", getBeginDateTime(), getEndDateTime());
             
-            // Step 1: Register provider (5.2.2)
+            // Step 1: Register provider (5.2.2) - Get data directly from ProviderDetailsComponent (Critical Integration Pattern)
+            var providerTags = providerDetailsComponent.getProviderTags();
+            var providerAttributes = providerDetailsComponent.getProviderAttributes();
             Map<String, String> providerAttributesMap = convertAttributesToMap(providerAttributes);
+            
             com.ospreydcs.dp.service.common.model.ResultStatus registerResult = dpApplication.registerProvider(
-                providerName.get(),
-                providerDescription.get(),
+                providerDetailsComponent.getProviderName(),
+                providerDetailsComponent.getProviderDescription(),
                 new java.util.ArrayList<>(providerTags),
                 providerAttributesMap
             );
@@ -267,7 +291,9 @@ public class DataGenerationViewModel {
             logger.info("Provider registered successfully: {}", registerResult.msg);
             statusMessage.set("Generating and ingesting data...");
             
-            // Step 2: Generate and ingest data (5.2.3)
+            // Step 2: Generate and ingest data (5.2.3) - Get data directly from RequestDetailsComponent (Critical Integration Pattern)
+            var requestTags = requestDetailsComponent.getRequestTags();
+            var requestAttributes = requestDetailsComponent.getRequestAttributes();
             Map<String, String> requestAttributesMap = convertAttributesToMap(requestAttributes);
             java.time.Instant beginInstant = getBeginDateTime().atZone(java.time.ZoneId.systemDefault()).toInstant();
             java.time.Instant endInstant = getEndDateTime().atZone(java.time.ZoneId.systemDefault()).toInstant();

@@ -19,15 +19,11 @@ public class DataImportViewModel {
 
     private static final Logger logger = LogManager.getLogger();
 
-    // Provider Details properties
+    // Provider Details properties - only used for property binding, actual data comes from components
     private final StringProperty providerName = new SimpleStringProperty("");
     private final StringProperty providerDescription = new SimpleStringProperty("");
-    private final ObservableList<String> providerTags = FXCollections.observableArrayList();
-    private final ObservableList<String> providerAttributes = FXCollections.observableArrayList();
 
-    // Request Details properties
-    private final ObservableList<String> requestTags = FXCollections.observableArrayList();
-    private final ObservableList<String> requestAttributes = FXCollections.observableArrayList();
+    // Request Details properties - only used for property binding, actual data comes from components  
     private final StringProperty eventName = new SimpleStringProperty("");
 
     // Import Details properties
@@ -41,6 +37,10 @@ public class DataImportViewModel {
     // Dependencies
     private DpApplication dpApplication;
     private MainController mainController;
+    
+    // Component references for accessing component data
+    private com.ospreydcs.dp.gui.component.ProviderDetailsComponent providerDetailsComponent;
+    private com.ospreydcs.dp.gui.component.RequestDetailsComponent requestDetailsComponent;
 
     public DataImportViewModel() {
         logger.debug("DataImportViewModel created");
@@ -55,22 +55,6 @@ public class DataImportViewModel {
         return providerDescription;
     }
 
-    public ObservableList<String> getProviderTags() {
-        return providerTags;
-    }
-
-    public ObservableList<String> getProviderAttributes() {
-        return providerAttributes;
-    }
-
-    // Request Details property methods
-    public ObservableList<String> getRequestTags() {
-        return requestTags;
-    }
-
-    public ObservableList<String> getRequestAttributes() {
-        return requestAttributes;
-    }
 
     public StringProperty eventNameProperty() {
         return eventName;
@@ -103,6 +87,17 @@ public class DataImportViewModel {
     public void setMainController(MainController mainController) {
         this.mainController = mainController;
         logger.debug("MainController injected into DataImportViewModel");
+    }
+    
+    // Component injection methods
+    public void setProviderDetailsComponent(com.ospreydcs.dp.gui.component.ProviderDetailsComponent component) {
+        this.providerDetailsComponent = component;
+        logger.debug("ProviderDetailsComponent injected into DataImportViewModel");
+    }
+    
+    public void setRequestDetailsComponent(com.ospreydcs.dp.gui.component.RequestDetailsComponent component) {
+        this.requestDetailsComponent = component;
+        logger.debug("RequestDetailsComponent injected into DataImportViewModel");
     }
 
     // Business logic methods
@@ -148,13 +143,15 @@ public class DataImportViewModel {
         // Clear provider details
         providerName.set("");
         providerDescription.set("");
-        providerTags.clear();
-        providerAttributes.clear();
+        if (providerDetailsComponent != null) {
+            providerDetailsComponent.clearProviderDetails();
+        }
         
         // Clear request details
-        requestTags.clear();
-        requestAttributes.clear();
         eventName.set("");
+        if (requestDetailsComponent != null) {
+            requestDetailsComponent.clearRequestDetails();
+        }
         
         // Clear import details
         resetImportDetails();
@@ -241,8 +238,14 @@ public class DataImportViewModel {
     }
 
     private boolean isIngestValid() {
+        // Validate components are available
+        if (providerDetailsComponent == null || requestDetailsComponent == null) {
+            updateStatus("Component references not set - cannot access form data");
+            return false;
+        }
+        
         // Validate provider name is not empty (section 13.2.1 requirement)
-        String providerNameValue = providerName.get();
+        String providerNameValue = providerDetailsComponent.getProviderName();
         if (providerNameValue == null || providerNameValue.trim().isEmpty()) {
             updateStatus("Provider name is required for ingestion");
             return false;
@@ -258,25 +261,35 @@ public class DataImportViewModel {
     }
 
     private ResultStatus registerProvider() {
+        // Get data directly from ProviderDetailsComponent (Critical Integration Pattern)
+        var providerTags = providerDetailsComponent.getProviderTags();
+        var providerAttributes = providerDetailsComponent.getProviderAttributes();
+        
         // Convert provider attributes list to map
         Map<String, String> attributesMap = convertAttributesToMap(providerAttributes);
         
         return dpApplication.registerProvider(
-            providerName.get(),
-            providerDescription.get(),
+            providerDetailsComponent.getProviderName(),
+            providerDetailsComponent.getProviderDescription(),
             List.copyOf(providerTags),
             attributesMap
         );
     }
 
     private ResultStatus performDataIngestion() {
+        // Get data directly from RequestDetailsComponent (Critical Integration Pattern)
+        var requestTags = requestDetailsComponent.getRequestTags();
+        var requestAttributes = requestDetailsComponent.getRequestAttributes();
+        
         // Convert request attributes list to map
         Map<String, String> requestAttributesMap = convertAttributesToMap(requestAttributes);
+        
+        String eventNameValue = requestDetailsComponent.getEventName();
         
         return dpApplication.ingestImportedData(
             List.copyOf(requestTags),
             requestAttributesMap,
-            eventName.get().trim().isEmpty() ? null : eventName.get(),
+            (eventNameValue == null || eventNameValue.trim().isEmpty()) ? null : eventNameValue,
             List.copyOf(ingestionDataFrames)
         );
     }
