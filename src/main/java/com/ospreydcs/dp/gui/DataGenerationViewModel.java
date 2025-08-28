@@ -294,6 +294,7 @@ public class DataGenerationViewModel {
             // Step 2: Generate and ingest data (5.2.3) - Get data directly from RequestDetailsComponent (Critical Integration Pattern)
             var requestTags = requestDetailsComponent.getRequestTags();
             var requestAttributes = requestDetailsComponent.getRequestAttributes();
+            String eventName = requestDetailsComponent.getEventName();
             Map<String, String> requestAttributesMap = convertAttributesToMap(requestAttributes);
             java.time.Instant beginInstant = getBeginDateTime().atZone(java.time.ZoneId.systemDefault()).toInstant();
             java.time.Instant endInstant = getEndDateTime().atZone(java.time.ZoneId.systemDefault()).toInstant();
@@ -303,6 +304,7 @@ public class DataGenerationViewModel {
                 endInstant,
                 new java.util.ArrayList<>(requestTags),
                 requestAttributesMap,
+                eventName,
                 new java.util.ArrayList<>(pvDetails),
                 getBucketSizeSeconds()
             );

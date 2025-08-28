@@ -249,6 +249,7 @@ public class DpApplication {
             Instant endTime,
             List<String> tags,
             Map<String, String> attributes,
+            String eventName,
             List<PvDetail> pvDetails,
             int bucketSizeSeconds
     ) {
@@ -270,7 +271,7 @@ public class DpApplication {
             
             // Generate and ingest data for each PV
             for (PvDetail pvDetail : pvDetails) {
-                ResultStatus result = generateAndIngestPvData(pvDetail, beginTime, endTime, tags, attributes, bucketSizeSeconds);
+                ResultStatus result = generateAndIngestPvData(pvDetail, beginTime, endTime, tags, attributes, eventName, bucketSizeSeconds);
                 logger.debug("generating pv: {} values per second: {}", pvDetail.getPvName(), pvDetail.getValuesPerSecond());
                 if (result.isError) {
                     return result; // Return first error encountered
@@ -300,7 +301,7 @@ public class DpApplication {
     
     private ResultStatus generateAndIngestPvData(
             PvDetail pvDetail, Instant beginTime, Instant endTime,
-            List<String> tags, Map<String, String> attributes, int bucketSizeSeconds
+            List<String> tags, Map<String, String> attributes, String eventName, int bucketSizeSeconds
     ) {
         try {
             // Calculate total duration and number of buckets
@@ -383,7 +384,7 @@ public class DpApplication {
                     values,                            // values
                     tags,                              // tags
                     attributes,                        // attributes
-                    null,                              // eventDescription
+                    eventName,                              // eventDescription
                     null,                              // eventStartSeconds
                     null,                              // eventStartNanos
                     null,                              // eventStopSeconds

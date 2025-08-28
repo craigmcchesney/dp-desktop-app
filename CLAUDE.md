@@ -113,6 +113,13 @@ Explore → Data, PV Metadata, Provider Metadata, Datasets, Annotations
 3. Use `DpApplication` wrapper methods to invoke gRPC APIs
 4. Handle MongoDB connections through the shared `MongoInterface`
 
+### Application Lifecycle
+- `DpDesktopApplication` (JavaFX Application) manages application lifecycle
+- `DpApplication` initialized in `init()` phase before JavaFX UI starts
+- MainController coordinates navigation and dependency injection to child controllers
+- Child controllers receive DpApplication, Stage, and MainController references for full integration
+- Application shutdown handled through `DpApplication.fini()` to properly clean up gRPC services
+
 ### Current Implementation Status
 - ✅ In-process service ecosystem container
 - ✅ API client structure (IngestionClient and QueryClient implemented)
@@ -138,6 +145,10 @@ Explore → Data, PV Metadata, Provider Metadata, Datasets, Annotations
 - ✅ Data import view with Excel file processing and DataImportUtility integration
 - ✅ Calculations section with multi-sheet Excel import functionality
 - ✅ Data export functionality (CSV, XLSX, HDF5 formats) with automatic file opening
+- ✅ Complete data ingestion workflow for both data generation and data import paths
+- ✅ Ingest and Reset button functionality in data-import view with proper error handling
+- ✅ Critical Integration Pattern implemented across all views using reusable components
+- ✅ Event name handling in Request Details sections for both generation and import workflows
 
 ## GUI Architecture
 
@@ -314,7 +325,7 @@ cd ~/dp.fork/dp-java/dp-desktop-app
 mvn clean compile
 ```
 
-### Testing
+### Testing and Development Workflow
 ```bash
 # Build and run application for testing
 mvn clean compile javafx:run
@@ -322,6 +333,12 @@ mvn clean compile javafx:run
 # Package application for deployment testing
 mvn clean package
 java -jar target/dp-desktop-app-1.11.0-shaded.jar
+
+# Update shared utilities workflow (when modifying dp-service dependency)
+cd ~/dp.fork/dp-java/dp-service
+mvn clean install -DskipTests
+cd ~/dp.fork/dp-java/dp-desktop-app
+mvn clean compile
 ```
 
 ## MongoDB Integration
@@ -331,11 +348,12 @@ java -jar target/dp-desktop-app-1.11.0-shaded.jar
 - MongoDB drivers: sync, reactive streams, core, and BSON
 
 ## Debugging and Logging
-- Log4j2 configuration in `src/main/resources/log4j2.xml`
-- Change log level to DEBUG for detailed component debugging
+- Log4j2 configuration in `src/main/resources/log4j2.xml` (currently set to DEBUG level)
 - Key logger names: `com.ospreydcs.dp.gui.*` for UI components
+- Third-party library logging suppressed: `io.grpc.netty` (ERROR), `io.netty.util` (OFF), `org.mongodb.driver` (ERROR)
 - JavaFX UI thread operations logged with method entry/exit points
 - Global state synchronization extensively logged for troubleshooting
+- Component data access patterns extensively logged for debugging Critical Integration Pattern violations
 
 ## Critical Architecture Concepts
 
