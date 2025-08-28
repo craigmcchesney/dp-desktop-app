@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" styleClass="form-container">
+   <Label styleClass="section-header" text="Provider Details" />
+   <GridPane hgap="10" vgap="10">
+      <columnConstraints>
+         <ColumnConstraints minWidth="120" prefWidth="120" />
+         <ColumnConstraints hgrow="ALWAYS" />
+      </columnConstraints>
+      
+      <Label text="Name: *" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+      <TextField fx:id="providerNameField" promptText="Provider name" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+      
+      <Label text="Description:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+      <TextArea fx:id="providerDescriptionArea" prefRowCount="2" promptText="Provider description" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+      
+      <com.ospreydcs.dp.gui.component.TagsListComponent fx:id="providerTagsComponent" labelText="Provider Tags:" GridPane.columnIndex="0" GridPane.columnSpan="2" GridPane.rowIndex="2" />
+      
+      <com.ospreydcs.dp.gui.component.AttributesListComponent fx:id="providerAttributesComponent" labelText="Provider Attributes:" GridPane.columnIndex="0" GridPane.columnSpan="2" GridPane.rowIndex="3" />
+   </GridPane>
+</VBox>

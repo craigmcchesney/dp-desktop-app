@@ -1,6 +1,8 @@
 package com.ospreydcs.dp.gui;
 
 import com.ospreydcs.dp.gui.component.AttributesListComponent;
+import com.ospreydcs.dp.gui.component.ProviderDetailsComponent;
+import com.ospreydcs.dp.gui.component.RequestDetailsComponent;
 import com.ospreydcs.dp.gui.component.TagsListComponent;
 import com.ospreydcs.dp.gui.model.PvDetail;
 import javafx.fxml.FXML;
@@ -20,13 +22,11 @@ public class DataGenerationController implements Initializable {
 
     private static final Logger logger = LogManager.getLogger();
 
-    // Provider Details FXML components
-    @FXML private TextField providerNameField;
-    @FXML private TextArea providerDescriptionArea;
-    @FXML private TagsListComponent providerTagsComponent;
-    @FXML private AttributesListComponent providerAttributesComponent;
+    // Provider and Request Details components
+    @FXML private ProviderDetailsComponent providerDetailsComponent;
+    @FXML private RequestDetailsComponent requestDetailsComponent;
 
-    // Request Details FXML components
+    // Generation Details FXML components
     @FXML private DatePicker dataBeginDatePicker;
     @FXML private Spinner<Integer> beginHourSpinner;
     @FXML private Spinner<Integer> beginMinuteSpinner;
@@ -35,9 +35,6 @@ public class DataGenerationController implements Initializable {
     @FXML private Spinner<Integer> endHourSpinner;
     @FXML private Spinner<Integer> endMinuteSpinner;
     @FXML private Spinner<Integer> endSecondSpinner;
-    @FXML private TagsListComponent requestTagsComponent;
-    @FXML private AttributesListComponent requestAttributesComponent;
-    @FXML private TextField eventNameField;
 
     // PV Details FXML components
     @FXML private ListView<PvDetail> pvDetailsList;
@@ -78,13 +75,18 @@ public class DataGenerationController implements Initializable {
     }
 
     private void bindUIToViewModel() {
-        // Provider Details bindings
-        providerNameField.textProperty().bindBidirectional(viewModel.providerNameProperty());
-        providerDescriptionArea.textProperty().bindBidirectional(viewModel.providerDescriptionProperty());
-        providerTagsComponent.setTags(viewModel.getProviderTags());
-        providerAttributesComponent.setAttributes(viewModel.getProviderAttributes());
+        // Provider Details component bindings
+        providerDetailsComponent.providerNameProperty().bindBidirectional(viewModel.providerNameProperty());
+        providerDetailsComponent.providerDescriptionProperty().bindBidirectional(viewModel.providerDescriptionProperty());
+        providerDetailsComponent.setProviderTags(viewModel.getProviderTags());
+        providerDetailsComponent.setProviderAttributes(viewModel.getProviderAttributes());
 
-        // Request Details bindings
+        // Request Details component bindings
+        requestDetailsComponent.setRequestTags(viewModel.getRequestTags());
+        requestDetailsComponent.setRequestAttributes(viewModel.getRequestAttributes());
+        requestDetailsComponent.eventNameProperty().bindBidirectional(viewModel.eventNameProperty());
+
+        // Generation Details bindings
         dataBeginDatePicker.valueProperty().bindBidirectional(viewModel.dataBeginDateProperty());
         
         
@@ -100,10 +102,6 @@ public class DataGenerationController implements Initializable {
         setupSpinnerBinding(endSecondSpinner, viewModel.endSecondProperty(), "endSecond");
         
         logger.debug("Time spinner bindings completed");
-        
-        requestTagsComponent.setTags(viewModel.getRequestTags());
-        requestAttributesComponent.setAttributes(viewModel.getRequestAttributes());
-        eventNameField.textProperty().bindBidirectional(viewModel.eventNameProperty());
 
         // PV Details bindings
         pvDetailsList.setItems(viewModel.getPvDetails());

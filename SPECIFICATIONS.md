@@ -290,4 +290,4 @@ To the right of the list box should be a panel of vertically arranged buttons la
 12.3 To the data-generation view, add a new section "Generation Details" below the "Request Details" section, and move the "Data Begin Time", "Begin Time", "Data End Time", and "End Time" to the new section.
 12.3.1 Add the existing content for the list of "Process Variables (PVs)" and the corresponding data entry form to the "Generation details" section.  Make the labels for process variable elements smaller to be consistent with the labels within other sections.
 
-12.4 In the interest of sharing them with the new "data-import" view, make the sections for "Provider Details" and "Request Details" re-usable components that can used in the new view in addition to the data-generation view.
+12.4 In the interest of sharing them with the new "data-import" view, make the sections for "Provider Details" and "Request Details" re-usable elements that can used in the new view in addition to the data-generation view.
