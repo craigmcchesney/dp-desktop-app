@@ -25,8 +25,8 @@
             <Menu text="Explore">
                <items>
                   <MenuItem fx:id="dataMenuItem" disable="true" onAction="#onData" text="Data" />
-                  <MenuItem fx:id="pvMetadataMenuItem" disable="true" onAction="#onPvMetadata" text="PV Metadata" />
-                  <MenuItem fx:id="providerMetadataMenuItem" disable="true" onAction="#onProviderMetadata" text="Provider Metadata" />
+                  <MenuItem fx:id="pvMetadataMenuItem" disable="true" onAction="#onPvMetadata" text="PVs" />
+                  <MenuItem fx:id="providerMetadataMenuItem" disable="true" onAction="#onProviderMetadata" text="Providers" />
                   <MenuItem fx:id="datasetsMenuItem" disable="true" onAction="#onDatasets" text="Datasets" />
                   <MenuItem fx:id="annotationsMenuItem" disable="true" onAction="#onAnnotations" text="Annotations" />
                </items>

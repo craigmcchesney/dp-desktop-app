@@ -316,3 +316,28 @@ To the right of the list box should be a panel of vertically arranged buttons la
 13.2.5 If the call to ingestImportedData() succeeds, return to the home view and display confirmation that ingestion of the imported data succeeded, and suggesting navigation to the "Data Explorer" tool.
 
 13.3 Add a "Reset" button in the data-import view's "Import Details" section, so that if there is an error ingesting the imported data, the user can reset the Import Details.  When the button is clicked, clear the "File" field and list of Import Data Frames in the Import Details section.
+
+14. Create the "pv-explore" view which contains 3 sections, each described in more detail below.
+
+14.1 "pv-explore" view menu navigation
+14.1.1 Rename Explore->"PV Metadata" to "PVs", and rename Explore->"Provider Metadata" to "Providers"
+14.1.2 Navigation to the "pv-explore" view is via the Explore->"PVs" menu.
+
+14.2 "Query PVs" component: This will be a re-usable component, so please implement it as a standalone component instead of embedded in the view.  It will probably be included in the provider-explore view.  This component should be positioned to the left side of the pv-explore view, running the length of the window vertically.
+14.2.1 At the top of the "Query PVs" component, add the label "Query PVs".
+14.2.2 Below the label, include a listbox that will display the list of PV names selected for query.  The list should be scrollable.  The list should be initialized from the DpApplication.pvNames member.  
+14.2.3 When PV names are added to the list in the view, they should also be added to the DpApplication.pvNames list.  Add methods for adding and removing items from DpApplication.pvNames when the view list is modified.  Please also change DpApplication.pvNames to be a sorted list.
+14.2.4 Each item in the list should include a remove button icon with trash can icon or emoji as its label for removing the PV name from the list (or a "remove" button or Hyperlink).  When the remove button icon is clicked, the PV name is removed from the view's list AND DpApplication.pvNames.
+14.2.5 Below the PV names listbox, should be a button labeled "Edit Query".  The button should always be visible (not scrolled away from).  The button should always be enabled.  When the button is clicked, the view should change to the "Query Editor" tab of the data-explore view.  Because we've kept DpApplication.pvNames in sync with the view's list of PV names, the Query Editor should display the list of pvNames as modified in the pv-explore view's "Query PVs" component.
+
+14.3 To the right of the "Query PVs" component are two sections arranged vertically.  The top section is labeled "PV Query Editor" and contains a form for entering a PV query.  The bottom section is labeled "PV Query Results" and contains a list (or tabular) view of the query results.  These will follow the pattern of the "PV Search Panel" in the data-explore view's "Query Editor" tab.  You can copy those elements instead of worrying about re-use, since the plan is to remove the "PV Search Panel" once we get the pv-explore view working correctly.
+14.3.1 The "PV Query Editor"  section should include the "Search:" field, "PV name list" / "PV name pattern" radio buttons, and "Search" buttons from the "PV Search Panel".  The "Close" button is not needed.
+14.3.2 The "PV Query Results" section should display a list of the PvInfo items returned in the QueryPvMetadataResponse (whose metadataResult member contains a list of PvInfo objects) returned in the QueryPvMetadataApiResult.  In the "PV Search Panel" we only display the PV names in the results list.  But in the new "PV Query Results" section, make a display string for each PvInfo that includes pvName, lastBucketDataType, lastBucketDataTimestampsType, lastBucketSamplePeriod, first/lastDataTimestamp, and numBuckets.  If you think this would work better as a table with columns for the values than as a listbox with display strings, suggest that in your implementation plan.
+14.3.2.1 The results list in the "PV Query Results" section should be scrollable.
+14.3.2.2 Each item in the list should include a selection checkbox, with a header box for selecting all items in the results list.
+14.3.2.3 Below the scrollable results list should be an always-visible button panel, with a button labeled "Add Selected".  That button should be enabled when any of the PV checkboxes is selected, or disabled when no PV checkboxes are selected. When the "Add Selected" button is clicked, all the items whose checkbox is selected in the list of PVs are added to the "Query PVs" component's list of PV names AND the DpApplication.pvNames list.
+14.3.2.4 Each item in the list should include a Hyperlink (or button) labeled "add".  When the item's add link/button is clicked, the item's PV name should be added to the "Query PVs" component's list of PV names AND the DpApplication.pvNames list.
+
+14.4 When the user clicks the "Search" button in the "PV Query Editor", call one of  the DpApplication.queryPvMetadata() variants, following the pattern of DataExploreViewModel.searchPvMetadata().  The return value from queryPvMetadata() contains a ResultStatus indicating success or failure of the operation.  
+14.4.1 If ResultStatus.isError flag is set, the operation failed, and the ResultStatus.errorMsg should be displayed in the status bar.  
+14.4.2 If the method succeeds (isError flag is false), display the results in the "PV Query Results" section.

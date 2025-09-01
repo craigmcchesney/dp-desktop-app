@@ -80,6 +80,7 @@ public class DpApplication {
         // Store PV names directly for cross-view usage
         if (pvNames != null && !pvNames.isEmpty()) {
             this.pvNames = new java.util.ArrayList<>(pvNames);
+            Collections.sort(this.pvNames);
         } else {
             this.pvNames = null;
         }
@@ -89,8 +90,35 @@ public class DpApplication {
     public void setPvNames(List<String> pvNames) {
         if (pvNames != null && !pvNames.isEmpty()) {
             this.pvNames = new java.util.ArrayList<>(pvNames);
+            Collections.sort(this.pvNames);
         } else {
             this.pvNames = null;
+        }
+    }
+    
+    // Individual PV name management methods (for pv-explore view)
+    public void addPvName(String pvName) {
+        if (pvName == null || pvName.trim().isEmpty()) {
+            return;
+        }
+        
+        if (this.pvNames == null) {
+            this.pvNames = new ArrayList<>();
+        }
+        
+        // Check for duplicates and ignore if already exists
+        if (!this.pvNames.contains(pvName.trim())) {
+            this.pvNames.add(pvName.trim());
+            Collections.sort(this.pvNames);
+        }
+    }
+    
+    public void removePvName(String pvName) {
+        if (this.pvNames != null && pvName != null) {
+            this.pvNames.remove(pvName.trim());
+            if (this.pvNames.isEmpty()) {
+                this.pvNames = null;
+            }
         }
     }
     

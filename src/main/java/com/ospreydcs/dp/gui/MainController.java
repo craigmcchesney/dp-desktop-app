@@ -137,6 +137,7 @@ public class MainController implements Initializable {
     @FXML
     private void onPvMetadata() {
         viewModel.handlePvMetadata();
+        switchToView("/fxml/pv-explore.fxml");
     }
 
     @FXML
@@ -182,6 +183,11 @@ public class MainController implements Initializable {
                 diController.setDpApplication(dpApplication);
                 diController.setPrimaryStage(primaryStage);
                 diController.setMainController(this);
+            } else if (controller instanceof PvExploreController) {
+                PvExploreController peController = (PvExploreController) controller;
+                peController.setDpApplication(dpApplication);
+                peController.setPrimaryStage(primaryStage);
+                peController.setMainController(this);
             }
             
             viewModel.updateStatus("View loaded successfully");
