@@ -206,6 +206,35 @@ public class MainController implements Initializable {
         }
     }
     
+    public void navigateToProviderExploreWithSearch(String providerId) {
+        try {
+            logger.debug("Loading provider-explore view with automatic search for provider ID: {}", providerId);
+            viewModel.updateStatus("Loading provider explorer...");
+            
+            // Load the provider-explore FXML
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/provider-explore.fxml"));
+            contentPane.getChildren().clear();
+            contentPane.getChildren().add(loader.load());
+            
+            // Get the controller and inject dependencies
+            ProviderExploreController prController = (ProviderExploreController) loader.getController();
+            prController.setDpApplication(dpApplication);
+            prController.setPrimaryStage(primaryStage);
+            prController.setMainController(this);
+            prController.initializeView();
+            
+            // Execute search with the provided ID
+            prController.executeProviderSearch(providerId);
+            
+            viewModel.updateStatus("Provider search executed successfully");
+            logger.debug("Successfully loaded provider-explore view with search for provider ID: {}", providerId);
+            
+        } catch (Exception e) {
+            logger.error("Failed to load provider-explore view with search", e);
+            viewModel.updateStatus("Failed to load provider explorer: " + e.getMessage());
+        }
+    }
+    
     private void loadHomeView() {
         try {
             logger.debug("Loading home view");

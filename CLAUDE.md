@@ -158,6 +158,8 @@ Explore → Data, PVs, Providers, Datasets, Annotations
 - ✅ Provider Explore view with dedicated provider discovery, search, and management functionality
 - ✅ Provider search functionality with hyperlink PV names for easy addition to query list
 - ✅ Integrated QueryPvsComponent in provider-explore for consistent PV management across views
+- ✅ Cross-view navigation from pv-explore to provider-explore via Provider Name hyperlinks
+- ✅ Automatic provider search execution when navigating from PV results to provider details
 
 ## GUI Architecture
 
@@ -221,7 +223,8 @@ The application follows the Model-View-ViewModel pattern:
 6. **Bulk Operations**: "Add Selected" button (enabled when checkboxes selected)
 7. **Individual Operations**: Hyperlink PV names for direct addition to Query PVs list
 8. **Cross-View Navigation**: "Edit Query" button returns to data-explore view with updated PV list
-9. **State Synchronization**: PV additions/removals automatically sync with global application state
+9. **Provider Navigation**: Provider Name hyperlinks navigate to provider-explore view with automatic search
+10. **State Synchronization**: PV additions/removals automatically sync with global application state
 
 ### Provider Explore Workflow (Implemented)
 1. **Query PVs Component**: Reusable component on left side for PV selection management (same as pv-explore)
@@ -323,10 +326,11 @@ Represents individual calculation frames from Excel import:
 
 ### PvInfoTableRow (`src/main/java/com/ospreydcs/dp/gui/model/PvInfoTableRow.java`)
 Wrapper for protobuf PvInfo in TableView displays:
-- PV name, data type, formatted timestamps and sample periods
+- PV name, provider name, data type, formatted timestamps and sample periods
+- Provider ID access for cross-view navigation (getLastProviderId())
 - Selection state management for bulk operations
 - Property binding support for JavaFX TableView integration
-- Used in pv-explore view for PV discovery and selection
+- Used in pv-explore view for PV discovery and selection with provider navigation
 
 ### ProviderInfoTableRow (`src/main/java/com/ospreydcs/dp/gui/model/ProviderInfoTableRow.java`)
 Wrapper for protobuf ProviderInfo in TableView displays:
@@ -432,9 +436,11 @@ Two parallel workflows exist for data ingestion:
 Both paths converge at the same gRPC ingestion API but handle different data sources and processing requirements.
 
 ### Cross-View Navigation Patterns
-The application uses a hub-and-spoke navigation model:
+The application uses a hub-and-spoke navigation model with cross-exploration capabilities:
 - **Home View**: Central hub with application state display and navigation hints
 - **Feature Views**: Data generation, import, exploration - all return to home on completion
+- **Cross-Exploration**: Direct navigation between pv-explore and provider-explore views via hyperlinks
+- **Automatic Search**: Navigation includes automatic search execution with pre-populated parameters
 - **State Synchronization**: Global state updates trigger menu enablement and home view updates
 - **Background Operations**: Long-running operations use JavaFX Task with UI thread synchronization
 
@@ -781,3 +787,72 @@ pvNamesColumn.setCellFactory(column -> new PvNamesTableCell());
 - Handle comma separation manually for multiple hyperlinks
 - Clear default text with `setText(null)` when using custom graphics
 - Apply appropriate CSS classes for styling consistency
+
+### Cross-View Navigation with Automatic Search Pattern
+**For implementing navigation between related views with automatic search execution:**
+```java
+// 1. In source view Controller - create navigation method
+private void navigateToTargetView(String searchParameter) {
+    if (mainController != null) {
+        mainController.navigateToTargetViewWithSearch(searchParameter);
+    }
+}
+
+// 2. In MainController - add specialized navigation method
+public void navigateToTargetViewWithSearch(String searchParameter) {
+    try {
+        // Load target view
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/target-view.fxml"));
+        contentPane.getChildren().clear();
+        contentPane.getChildren().add(loader.load());
+        
+        // Inject dependencies
+        TargetViewController controller = (TargetViewController) loader.getController();
+        controller.setDpApplication(dpApplication);
+        controller.setPrimaryStage(primaryStage);
+        controller.setMainController(this);
+        controller.initializeView();
+        
+        // Execute automatic search with parameter
+        controller.executeAutomaticSearch(searchParameter);
+        
+    } catch (Exception e) {
+        logger.error("Failed to navigate with automatic search", e);
+    }
+}
+
+// 3. In target view Controller - add automatic search method
+public void executeAutomaticSearch(String searchParameter) {
+    // Pre-populate search fields
+    searchField.setText(searchParameter);
+    
+    // Clear other fields for focused search
+    otherField1.clear();
+    otherField2.clear();
+    
+    // Execute search via ViewModel
+    viewModel.executeSearch();
+}
+
+// 4. In hyperlink TableCell - call navigation with data from table row
+hyperlink.setOnAction(e -> {
+    TableRowType tableRow = getTableRow().getItem();
+    if (tableRow != null) {
+        // Use specific data from row for search parameter
+        String searchParam = tableRow.getSpecificFieldForSearch();
+        navigationMethod(searchParam);
+    }
+});
+```
+
+**Implementation Notes:**
+- Navigation preserves dependency injection patterns
+- Search parameter comes from protobuf data in table rows
+- Automatic search clears non-relevant fields for focused results
+- Error handling prevents navigation failures from breaking application state
+- Status bar provides user feedback during navigation process
+
+**Usage Examples:**
+- PV Explore → Provider Explore: Click provider name hyperlink navigates with provider ID search
+- Provider Explore → PV Explore: Could be implemented for reverse navigation
+- Dataset Builder → Data Explorer: Navigation with pre-populated PV list and time ranges

@@ -34,6 +34,7 @@ public class PvExploreController implements Initializable {
     @FXML private TableView<PvInfoTableRow> resultsTable;
     @FXML private TableColumn<PvInfoTableRow, Boolean> selectColumn;
     @FXML private TableColumn<PvInfoTableRow, String> pvNameColumn;
+    @FXML private TableColumn<PvInfoTableRow, String> providerNameColumn;
     @FXML private TableColumn<PvInfoTableRow, String> dataTypeColumn;
     @FXML private TableColumn<PvInfoTableRow, String> timestampsTypeColumn;
     @FXML private TableColumn<PvInfoTableRow, String> samplePeriodColumn;
@@ -72,6 +73,7 @@ public class PvExploreController implements Initializable {
         // Set up column cell value factories
         selectColumn.setCellValueFactory(new PropertyValueFactory<>("selected"));
         pvNameColumn.setCellValueFactory(new PropertyValueFactory<>("pvName"));
+        providerNameColumn.setCellValueFactory(new PropertyValueFactory<>("providerName"));
         dataTypeColumn.setCellValueFactory(new PropertyValueFactory<>("dataType"));
         timestampsTypeColumn.setCellValueFactory(new PropertyValueFactory<>("timestampsType"));
         samplePeriodColumn.setCellValueFactory(new PropertyValueFactory<>("samplePeriod"));
@@ -84,7 +86,10 @@ public class PvExploreController implements Initializable {
         selectColumn.setEditable(true);
 
         // Set up PV name column as hyperlinks
-        pvNameColumn.setCellFactory(createHyperlinkCellFactory());
+        pvNameColumn.setCellFactory(createPvNameHyperlinkCellFactory());
+        
+        // Set up Provider name column as hyperlinks
+        providerNameColumn.setCellFactory(createProviderNameHyperlinkCellFactory());
 
         // Make table editable for checkboxes
         resultsTable.setEditable(true);
@@ -104,7 +109,7 @@ public class PvExploreController implements Initializable {
         selectColumn.setGraphic(headerCheckBox);
     }
 
-    private Callback<TableColumn<PvInfoTableRow, String>, TableCell<PvInfoTableRow, String>> createHyperlinkCellFactory() {
+    private Callback<TableColumn<PvInfoTableRow, String>, TableCell<PvInfoTableRow, String>> createPvNameHyperlinkCellFactory() {
         return column -> new TableCell<PvInfoTableRow, String>() {
             private final Hyperlink hyperlink = new Hyperlink();
 
@@ -121,6 +126,31 @@ public class PvExploreController implements Initializable {
                         viewModel.addPvNameToQueryList(item);
                     });
                     setGraphic(hyperlink);
+                }
+            }
+        };
+    }
+
+    private Callback<TableColumn<PvInfoTableRow, String>, TableCell<PvInfoTableRow, String>> createProviderNameHyperlinkCellFactory() {
+        return column -> new TableCell<PvInfoTableRow, String>() {
+            private final Hyperlink hyperlink = new Hyperlink();
+
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+
+                if (empty || item == null || item.trim().isEmpty()) {
+                    setGraphic(null);
+                } else {
+                    PvInfoTableRow tableRow = getTableRow().getItem();
+                    if (tableRow != null) {
+                        hyperlink.setText(item);
+                        hyperlink.setOnAction(e -> {
+                            // Navigate to provider-explore view and search for this provider
+                            navigateToProviderExplore(tableRow.getLastProviderId());
+                        });
+                        setGraphic(hyperlink);
+                    }
                 }
             }
         };
@@ -197,6 +227,17 @@ public class PvExploreController implements Initializable {
 
     public PvExploreViewModel getViewModel() {
         return viewModel;
+    }
+    
+    private void navigateToProviderExplore(String providerId) {
+        logger.debug("Navigating to provider-explore view with provider ID: {}", providerId);
+        
+        if (mainController != null) {
+            // Navigate to provider-explore view and trigger search
+            mainController.navigateToProviderExploreWithSearch(providerId);
+        } else {
+            logger.warn("MainController is null, cannot navigate to provider-explore view");
+        }
     }
 
     // FXML action handlers

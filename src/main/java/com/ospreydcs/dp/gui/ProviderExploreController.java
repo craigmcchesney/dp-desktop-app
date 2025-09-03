@@ -199,4 +199,26 @@ public class ProviderExploreController implements Initializable {
             }
         }
     }
+    
+    /**
+     * Execute provider search with a specific provider ID.
+     * Used for navigation from other views (like pv-explore).
+     */
+    public void executeProviderSearch(String providerId) {
+        logger.debug("Executing automatic provider search for provider ID: {}", providerId);
+        
+        // Set the provider ID in the form
+        providerIdField.setText(providerId);
+        
+        // Clear other fields to ensure we're only searching by ID
+        nameDescriptionField.clear();
+        tagValueField.clear();
+        attributeKeyField.clear();
+        attributeValueField.clear();
+        
+        // Execute the search
+        viewModel.executeSearch();
+        
+        logger.debug("Automatic provider search initiated for provider ID: {}", providerId);
+    }
 }

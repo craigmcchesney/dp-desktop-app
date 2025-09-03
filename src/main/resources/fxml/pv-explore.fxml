@@ -77,6 +77,7 @@
                   <columns>
                      <TableColumn fx:id="selectColumn" prefWidth="60.0" text="Select" />
                      <TableColumn fx:id="pvNameColumn" prefWidth="150.0" text="PV Name" />
+                     <TableColumn fx:id="providerNameColumn" prefWidth="120.0" text="Provider Name" />
                      <TableColumn fx:id="dataTypeColumn" prefWidth="100.0" text="Data Type" />
                      <TableColumn fx:id="timestampsTypeColumn" prefWidth="120.0" text="Timestamps Type" />
                      <TableColumn fx:id="samplePeriodColumn" prefWidth="100.0" text="Sample Period" />

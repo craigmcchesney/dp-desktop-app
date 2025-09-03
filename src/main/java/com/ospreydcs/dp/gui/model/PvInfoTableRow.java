@@ -18,15 +18,20 @@ public class PvInfoTableRow {
 
     private final BooleanProperty selected = new SimpleBooleanProperty(false);
     private final StringProperty pvName = new SimpleStringProperty();
+    private final StringProperty providerName = new SimpleStringProperty();
     private final StringProperty dataType = new SimpleStringProperty();
     private final StringProperty timestampsType = new SimpleStringProperty();
     private final StringProperty samplePeriod = new SimpleStringProperty();
     private final StringProperty firstDataTimestamp = new SimpleStringProperty();
     private final StringProperty lastDataTimestamp = new SimpleStringProperty();
     private final IntegerProperty numBuckets = new SimpleIntegerProperty();
+    
+    private final QueryPvMetadataResponse.MetadataResult.PvInfo pvInfo;
 
     public PvInfoTableRow(QueryPvMetadataResponse.MetadataResult.PvInfo pvInfo) {
+        this.pvInfo = pvInfo;
         this.pvName.set(pvInfo.getPvName());
+        this.providerName.set(pvInfo.getLastProviderName());
         this.dataType.set(pvInfo.getLastBucketDataType());
         this.timestampsType.set(pvInfo.getLastBucketDataTimestampsType());
         
@@ -71,6 +76,7 @@ public class PvInfoTableRow {
     // Property getters for table binding
     public BooleanProperty selectedProperty() { return selected; }
     public StringProperty pvNameProperty() { return pvName; }
+    public StringProperty providerNameProperty() { return providerName; }
     public StringProperty dataTypeProperty() { return dataType; }
     public StringProperty timestampsTypeProperty() { return timestampsType; }
     public StringProperty samplePeriodProperty() { return samplePeriod; }
@@ -82,12 +88,17 @@ public class PvInfoTableRow {
     public boolean isSelected() { return selected.get(); }
     public void setSelected(boolean selected) { this.selected.set(selected); }
     public String getPvName() { return pvName.get(); }
+    public String getProviderName() { return providerName.get(); }
     public String getDataType() { return dataType.get(); }
     public String getTimestampsType() { return timestampsType.get(); }
     public String getSamplePeriod() { return samplePeriod.get(); }
     public String getFirstDataTimestamp() { return firstDataTimestamp.get(); }
     public String getLastDataTimestamp() { return lastDataTimestamp.get(); }
     public int getNumBuckets() { return numBuckets.get(); }
+    
+    // Access to original PvInfo for additional fields
+    public String getLastProviderId() { return pvInfo.getLastProviderId(); }
+    public QueryPvMetadataResponse.MetadataResult.PvInfo getPvInfo() { return pvInfo; }
 
     @Override
     public String toString() {

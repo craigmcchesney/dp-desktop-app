@@ -385,3 +385,7 @@ To the right of the list box should be a panel of vertically arranged buttons la
 15.4.1 The return value from queryProviders() contains a ResultStatus indicating success or failure of the operation.  
 15.4.1.1 If ResultStatus.isError flag is set, the operation failed, and the ResultStatus.errorMsg should be displayed in the status bar.  
 15.4.1.2 If the method succeeds (isError flag is false), display the results in the "Provider Query Results" section's table.
+
+15.5 Navigation from pv-explore view to provider-explore view: We are going to add a mechanism for selecting a provider name in the query results table in the pv-explore view, searching for the specified provider, and navigating to the provider-explore view.
+15.5.1 Add a "Provider Name" column to the "PV Query Results" table.  Position the new column between the "PV Name" and "Data Type" columns.  The contents of the column should be the value in the PvInfo.lastProviderName field for the API query result PvInfo object corresponding to that table row.
+15.5.2 The Provider name displayed in the table should use a hyperlink.  When the hyperlink is clicked, the provider-explore view should be displayed, and the DpApplication.queryProviders() method should be invoked with the value of the PvInfo.lastProviderId for the corresponding row passed to that method's "providerId" parameter.  The query results should be displayed in the Provider Query Results table.
