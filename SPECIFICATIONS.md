@@ -389,3 +389,39 @@ To the right of the list box should be a panel of vertically arranged buttons la
 15.5 Navigation from pv-explore view to provider-explore view: We are going to add a mechanism for selecting a provider name in the query results table in the pv-explore view, searching for the specified provider, and navigating to the provider-explore view.
 15.5.1 Add a "Provider Name" column to the "PV Query Results" table.  Position the new column between the "PV Name" and "Data Type" columns.  The contents of the column should be the value in the PvInfo.lastProviderName field for the API query result PvInfo object corresponding to that table row.
 15.5.2 The Provider name displayed in the table should use a hyperlink.  When the hyperlink is clicked, the provider-explore view should be displayed, and the DpApplication.queryProviders() method should be invoked with the value of the PvInfo.lastProviderId for the corresponding row passed to that method's "providerId" parameter.  The query results should be displayed in the Provider Query Results table.
+
+16. Create the "dataset-explore" view which contains 2 sections, each described in more detail below.  The view will follow the patterns used to build the "pv-explore" and "provider-explore" views, with the exception that we are not including the re-usable "Query PVs" component.  
+
+16.0 "dataset-explore" view menu navigation: Navigation to the "dataset-explore" view is via the Explore->"Datasets" menu.
+
+16.1 The view's two sections are labeled "Dataset Query Editor" and "Dataset Query Results", and follow the conventions established in the pv-explore view's "PV Query Editor" and "PV Query Results" sections as well as in the provider-explore view's "Provider Query Editor" and "Provider Query Results" sections.
+
+16.1.1 The "Dataset Query Editor" and "Dataset Query Results" sections are arranged vertically, with the former positioned above the latter.
+
+16.2 The "Dataset Query Editor" section displays a form for entering a Dataset query, including the following fields (all brief String input fields):
+16.2.1 "Dataset ID",
+16.2.2 "Owner"
+16.2.3 "Name / Description"
+16.2.4 "PV Name"
+
+16.3 The "Dataset Query Results" section should display a table of the protobuf API DataSet items (working directory for dp-grpc project with proto files for API definition is ~/dp.fork/dp-java/dp-grpc) returned in the QueryDataSetsApiResult object returned by the DpApplication.queryDataSets() method. The table should include the following columns (including the mapping between the column and field in the DataSet object and other relevant details):
+16.3.1 "ID" - displays DataSet.id.  This column should use a hyperlink on the displayed id value for navigating to the data-explore view's "Dataset Builder" as described below in section 16.3.7.
+16.3.2 "Name" - displays DataSet.name.
+16.3.3 "Owner" - displays DataSet.ownerId.
+16.3.4 "Description" - displays DataSet.description.
+16.3.5 "Data Blocks" - displays DataSet.dataBlocks.  Display Data Block details in a human-readable string (as in the data-explore view's "Dataset Builder" list of Data Blocks) using the format "[pv-1, pv-2, pv-3: 2025-09-03 00:00:00 -> 2025-09-03 00:10:00]" for each data block in a comma-separated list.
+
+16.3.6 The table in the "Dataset Query Results" section should be scrollable.
+
+16.3.7 Each Dataset id in the table's "ID" column should include a hyperlink.  When the Dataset id's hyperlink is clicked, the view should change to the data-explore view's "Dataset Builder" tab, and the dataset corresponding to the table row that contains the hyperlink for the selected id should be displayed in the "Dataset Builder" tab form (replacing any existing content in that view).
+
+16.4 When the user clicks the "Search" button in the "Dataset Query Editor", call the DpApplication.queryDataSets() method, passing the value for each of the "Dataset Query Editor's" input fields to the corresponding method parameter.  When the view element is empty, pass null as the value for the corresponding parameter.  Mapping of view elements to method parameters is below:
+
+16.4.1 pass value in "Dataset ID" field to method's idCriterion parameter.
+16.4.2 pass value in "Owner" field to method's ownerCriterion parameter.
+16.4.3 pass value in "Name / Description" field to method's textCriterion parameter.
+16.4.4 pass value in "PV Name" field to method's pvNameCriterion parameter.
+
+16.4.5 The return value from queryDataSets() contains a ResultStatus indicating success or failure of the operation.  
+16.4.5.1 If ResultStatus.isError flag is set, the operation failed, and the ResultStatus.errorMsg should be displayed in the status bar.  
+16.4.5.2 If the method succeeds (isError flag is false), display the list of DataSet objects from the method result in the "Dataset Query Results" section's table.

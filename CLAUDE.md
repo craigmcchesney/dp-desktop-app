@@ -98,6 +98,7 @@ Explore → Data, PVs, Providers, Datasets, Annotations
 - **Data/Metadata menus**: Enabled after data ingestion (in-process mode) or immediately (remote production mode)
 - **PVs**: Navigate to pv-explore view for PV discovery and management
 - **Providers**: Navigate to provider-explore view for provider discovery and management
+- **Datasets**: Navigate to dataset-explore view for dataset discovery and Dataset Builder navigation
 
 ## Development Guidelines
 
@@ -160,6 +161,9 @@ Explore → Data, PVs, Providers, Datasets, Annotations
 - ✅ Integrated QueryPvsComponent in provider-explore for consistent PV management across views
 - ✅ Cross-view navigation from pv-explore to provider-explore via Provider Name hyperlinks
 - ✅ Automatic provider search execution when navigating from PV results to provider details
+- ✅ Dataset Explore view with dedicated dataset discovery, search, and management functionality
+- ✅ Dataset ID hyperlink navigation to Dataset Builder tab with automatic dataset loading
+- ✅ Protobuf DataSet to DataBlockDetail conversion for form population
 
 ## GUI Architecture
 
@@ -236,6 +240,16 @@ The application follows the Model-View-ViewModel pattern:
 6. **Cross-View Navigation**: "Edit Query" button in QueryPvsComponent returns to data-explore view
 7. **State Synchronization**: PV additions automatically sync with global application state
 8. **API Integration**: Uses `DpApplication.queryProviders()` with null-safe parameter handling
+
+### Dataset Explore Workflow (Implemented)
+1. **Dataset Query Editor**: Search form with 4 optional fields (Dataset ID, Owner, Name/Description, PV Name)
+2. **Search Execution**: Background task queries dataset metadata with loading indicators and status feedback
+3. **Results Display**: TableView with dataset details including ID, name, owner, description, and data blocks count
+4. **Interactive Dataset IDs**: Each Dataset ID is a hyperlink that navigates to data-explore view's Dataset Builder tab
+5. **Automatic Dataset Loading**: Clicking ID hyperlinks triggers background dataset query and form population
+6. **Cross-View Navigation**: Seamless navigation to Dataset Builder with all dataset details loaded
+7. **API Integration**: Uses `DpApplication.queryDataSets()` for search and individual dataset loading
+8. **Form Population**: Protobuf DataSet objects converted to UI-friendly DataBlockDetail objects
 
 ### Dataset Builder Workflow (Implemented)
 1. **Dataset Configuration**: Enter dataset name (required), description (optional), and auto-generated ID field
@@ -339,6 +353,13 @@ Wrapper for protobuf ProviderInfo in TableView displays:
 - Property binding support for JavaFX TableView integration
 - Used in provider-explore view for provider discovery and PV selection
 - Formats attributes as "key1=value1, key2=value2" strings from protobuf Attribute list
+
+### DatasetInfoTableRow (`src/main/java/com/ospreydcs/dp/gui/model/DatasetInfoTableRow.java`)
+Wrapper for protobuf DataSet in TableView displays:
+- Dataset ID, name, owner, description, and data blocks count
+- Property binding support for JavaFX TableView integration
+- Used in dataset-explore view for dataset discovery and navigation
+- Hyperlink support for Dataset ID column navigation to Dataset Builder
 
 ### Global State Management
 `DpApplication` maintains cross-view state with automatic synchronization:
@@ -856,3 +877,84 @@ hyperlink.setOnAction(e -> {
 - PV Explore → Provider Explore: Click provider name hyperlink navigates with provider ID search
 - Provider Explore → PV Explore: Could be implemented for reverse navigation
 - Dataset Builder → Data Explorer: Navigation with pre-populated PV list and time ranges
+- Dataset Explore → Dataset Builder: Click Dataset ID hyperlink navigates with automatic dataset loading
+
+### Dataset Loading Pattern
+**For implementing dataset loading from external sources into form components:**
+```java
+// 1. In ViewModel - add dataset loading method
+public void loadFromDataSet(com.ospreydcs.dp.grpc.v1.annotation.DataSet dataset) {
+    logger.debug("Loading dataset into builder: {}", dataset.getId());
+    
+    // Clear existing data first
+    resetDataset();
+    
+    // Populate form fields
+    setDatasetId(dataset.getId());
+    setDatasetName(dataset.getName());
+    setDatasetDescription(dataset.getDescription());
+    
+    // Convert protobuf DataBlocks to UI objects
+    dataBlocks.clear();
+    for (com.ospreydcs.dp.grpc.v1.annotation.DataBlock dataBlock : dataset.getDataBlocksList()) {
+        DataBlockDetail blockDetail = convertDataBlockToDetail(dataBlock);
+        dataBlocks.add(blockDetail);
+    }
+    
+    statusMessage.set("Dataset loaded: " + dataset.getName());
+}
+
+// 2. In Controller - add background loading with tab switching
+public void loadDatasetIntoBuilder(String datasetId) {
+    // Switch to target tab first
+    javafx.application.Platform.runLater(() -> {
+        tabPane.getSelectionModel().select(targetTabIndex);
+    });
+    
+    // Query dataset in background task
+    javafx.concurrent.Task<DataSetType> loadTask = new javafx.concurrent.Task<DataSetType>() {
+        @Override
+        protected DataSetType call() throws Exception {
+            ApiResult result = dpApplication.queryDataSets(datasetId, null, null, null);
+            if (result.resultStatus.isError) {
+                throw new RuntimeException(result.resultStatus.msg);
+            }
+            return result.dataSets.get(0);
+        }
+    };
+    
+    loadTask.setOnSucceeded(e -> {
+        javafx.application.Platform.runLater(() -> {
+            viewModel.loadFromDataSet(loadTask.getValue());
+        });
+    });
+    
+    Thread loadThread = new Thread(loadTask);
+    loadThread.setDaemon(true);
+    loadThread.start();
+}
+
+// 3. Protobuf to UI Object Conversion
+private DataBlockDetail convertDataBlockToDetail(DataBlock protobufDataBlock) {
+    java.time.Instant beginTime = java.time.Instant.ofEpochSecond(
+        protobufDataBlock.getBeginTime().getEpochSeconds(),
+        protobufDataBlock.getBeginTime().getNanoseconds()
+    );
+    
+    java.time.Instant endTime = java.time.Instant.ofEpochSecond(
+        protobufDataBlock.getEndTime().getEpochSeconds(),
+        protobufDataBlock.getEndTime().getNanoseconds()
+    );
+    
+    List<String> pvNames = new ArrayList<>(protobufDataBlock.getPvNamesList());
+    return new DataBlockDetail(pvNames, beginTime, endTime);
+}
+```
+
+**Key Implementation Notes:**
+- Use background tasks for API queries to prevent UI blocking
+- Switch tabs before starting background operations for immediate user feedback
+- Convert protobuf Timestamp objects to Java Instant using epoch seconds and nanoseconds
+- Always clear existing data before loading new dataset to prevent data mixing
+- Provide status feedback throughout the loading process
+- Handle API errors gracefully with user-friendly error messages

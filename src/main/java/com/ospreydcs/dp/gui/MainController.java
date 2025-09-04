@@ -149,6 +149,7 @@ public class MainController implements Initializable {
     @FXML
     private void onDatasets() {
         viewModel.handleDatasets();
+        switchToView("/fxml/dataset-explore.fxml");
     }
 
     @FXML
@@ -195,6 +196,11 @@ public class MainController implements Initializable {
                 prController.setPrimaryStage(primaryStage);
                 prController.setMainController(this);
                 prController.initializeView();
+            } else if (controller instanceof DatasetExploreController) {
+                DatasetExploreController dsController = (DatasetExploreController) controller;
+                dsController.setDpApplication(dpApplication);
+                dsController.setPrimaryStage(primaryStage);
+                dsController.setMainController(this);
             }
             
             viewModel.updateStatus("View loaded successfully");
@@ -232,6 +238,34 @@ public class MainController implements Initializable {
         } catch (Exception e) {
             logger.error("Failed to load provider-explore view with search", e);
             viewModel.updateStatus("Failed to load provider explorer: " + e.getMessage());
+        }
+    }
+    
+    public void navigateToDataExploreWithDataset(String datasetId) {
+        try {
+            logger.debug("Loading data-explore view with dataset ID: {}", datasetId);
+            viewModel.updateStatus("Loading data explorer...");
+            
+            // Load the data-explore FXML
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/data-explore.fxml"));
+            contentPane.getChildren().clear();
+            contentPane.getChildren().add(loader.load());
+            
+            // Get the controller and inject dependencies
+            DataExploreController deController = (DataExploreController) loader.getController();
+            deController.setDpApplication(dpApplication);
+            deController.setPrimaryStage(primaryStage);
+            deController.setMainController(this);
+            
+            // Load dataset into Dataset Builder tab
+            deController.loadDatasetIntoBuilder(datasetId);
+            
+            viewModel.updateStatus("Data explorer loaded with dataset");
+            logger.debug("Successfully loaded data-explore view and initiated dataset loading for ID: {}", datasetId);
+            
+        } catch (Exception e) {
+            logger.error("Failed to load data-explore view with dataset", e);
+            viewModel.updateStatus("Failed to load data explorer: " + e.getMessage());
         }
     }
     

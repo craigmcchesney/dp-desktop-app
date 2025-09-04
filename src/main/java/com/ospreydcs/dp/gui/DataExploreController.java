@@ -2132,4 +2132,72 @@ public class DataExploreController implements Initializable {
             }
         }
     }
+    
+    /**
+     * Load a dataset by ID into the Dataset Builder tab and switch to it.
+     * Called from MainController when navigating from dataset-explore view.
+     */
+    public void loadDatasetIntoBuilder(String datasetId) {
+        logger.debug("Loading dataset into Dataset Builder: {}", datasetId);
+        
+        if (dpApplication == null || datasetBuilderViewModel == null) {
+            logger.warn("Cannot load dataset - dpApplication or datasetBuilderViewModel is null");
+            return;
+        }
+        
+        // Switch to Dataset Builder tab (index 1)
+        javafx.application.Platform.runLater(() -> {
+            editorTabPane.getSelectionModel().select(1);
+            logger.debug("Switched to Dataset Builder tab");
+        });
+        
+        // Query dataset in background task
+        javafx.concurrent.Task<com.ospreydcs.dp.grpc.v1.annotation.DataSet> loadTask = new javafx.concurrent.Task<com.ospreydcs.dp.grpc.v1.annotation.DataSet>() {
+            @Override
+            protected com.ospreydcs.dp.grpc.v1.annotation.DataSet call() throws Exception {
+                logger.debug("Querying dataset by ID: {}", datasetId);
+                
+                com.ospreydcs.dp.client.result.QueryDataSetsApiResult apiResult = 
+                    dpApplication.queryDataSets(datasetId, null, null, null);
+                
+                if (apiResult == null) {
+                    throw new RuntimeException("Dataset query failed - null response from service");
+                }
+                
+                if (apiResult.resultStatus.isError) {
+                    throw new RuntimeException("Dataset query failed: " + apiResult.resultStatus.msg);
+                }
+                
+                if (apiResult.dataSets == null || apiResult.dataSets.isEmpty()) {
+                    throw new RuntimeException("Dataset not found: " + datasetId);
+                }
+                
+                // Return the first (and should be only) dataset
+                return apiResult.dataSets.get(0);
+            }
+        };
+        
+        loadTask.setOnSucceeded(e -> {
+            com.ospreydcs.dp.grpc.v1.annotation.DataSet dataset = loadTask.getValue();
+            javafx.application.Platform.runLater(() -> {
+                datasetBuilderViewModel.loadFromDataSet(dataset);
+                logger.info("Successfully loaded dataset into builder: {}", dataset.getName());
+            });
+        });
+        
+        loadTask.setOnFailed(e -> {
+            Throwable exception = loadTask.getException();
+            String errorMessage = "Failed to load dataset: " + exception.getMessage();
+            logger.error("Dataset loading failed", exception);
+            
+            javafx.application.Platform.runLater(() -> {
+                datasetBuilderViewModel.statusMessageProperty().set(errorMessage);
+            });
+        });
+        
+        // Run the background task
+        Thread loadThread = new Thread(loadTask);
+        loadThread.setDaemon(true);
+        loadThread.start();
+    }
 }

@@ -153,4 +153,51 @@ public class DatasetBuilderViewModel {
     public BooleanProperty resetButtonEnabledProperty() { return resetButtonEnabled; }
     public BooleanProperty saveButtonEnabledProperty() { return saveButtonEnabled; }
     public BooleanProperty datasetActionsEnabledProperty() { return datasetActionsEnabled; }
+    
+    /**
+     * Load dataset data from a DataSet protobuf object.
+     * Populates the form fields and data blocks from the loaded dataset.
+     */
+    public void loadFromDataSet(com.ospreydcs.dp.grpc.v1.annotation.DataSet dataset) {
+        logger.debug("Loading dataset into builder: {}", dataset.getId());
+        
+        // Clear existing data first
+        resetDataset();
+        
+        // Populate form fields
+        setDatasetId(dataset.getId());
+        setDatasetName(dataset.getName());
+        setDatasetDescription(dataset.getDescription());
+        
+        // Convert protobuf DataBlocks to DataBlockDetails
+        dataBlocks.clear();
+        for (com.ospreydcs.dp.grpc.v1.annotation.DataBlock dataBlock : dataset.getDataBlocksList()) {
+            DataBlockDetail blockDetail = convertDataBlockToDetail(dataBlock);
+            dataBlocks.add(blockDetail);
+        }
+        
+        statusMessage.set("Dataset loaded: " + dataset.getName());
+        logger.info("Successfully loaded dataset: {} with {} data blocks", dataset.getName(), dataBlocks.size());
+    }
+    
+    /**
+     * Convert protobuf DataBlock to DataBlockDetail for UI display.
+     */
+    private DataBlockDetail convertDataBlockToDetail(com.ospreydcs.dp.grpc.v1.annotation.DataBlock dataBlock) {
+        // Convert protobuf Timestamp to Instant
+        java.time.Instant beginTime = java.time.Instant.ofEpochSecond(
+            dataBlock.getBeginTime().getEpochSeconds(),
+            dataBlock.getBeginTime().getNanoseconds()
+        );
+        
+        java.time.Instant endTime = java.time.Instant.ofEpochSecond(
+            dataBlock.getEndTime().getEpochSeconds(),
+            dataBlock.getEndTime().getNanoseconds()
+        );
+        
+        // Convert list of PV names
+        java.util.List<String> pvNames = new java.util.ArrayList<>(dataBlock.getPvNamesList());
+        
+        return new DataBlockDetail(pvNames, beginTime, endTime);
+    }
 }
