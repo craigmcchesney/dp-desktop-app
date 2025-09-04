@@ -99,6 +99,7 @@ Explore → Data, PVs, Providers, Datasets, Annotations
 - **PVs**: Navigate to pv-explore view for PV discovery and management
 - **Providers**: Navigate to provider-explore view for provider discovery and management
 - **Datasets**: Navigate to dataset-explore view for dataset discovery and Dataset Builder navigation
+- **Annotations**: Navigate to annotation-explore view for annotation discovery and management
 
 ## Development Guidelines
 
@@ -164,6 +165,10 @@ Explore → Data, PVs, Providers, Datasets, Annotations
 - ✅ Dataset Explore view with dedicated dataset discovery, search, and management functionality
 - ✅ Dataset ID hyperlink navigation to Dataset Builder tab with automatic dataset loading
 - ✅ Protobuf DataSet to DataBlockDetail conversion for form population
+- ✅ Annotation Explore view with dedicated annotation discovery, search, and management functionality
+- ✅ Annotation search with 7 criteria fields and hyperlink navigation for IDs and calculation frames
+- ✅ Reusable CalculationFrameDetailsDialog component shared between data-explore and annotation-explore
+- ✅ AnnotationInfoTableRow wrapper for protobuf Annotation objects with calculation frame access
 
 ## GUI Architecture
 
@@ -173,17 +178,17 @@ The application follows the Model-View-ViewModel pattern:
 **Controllers** (`src/main/java/com/ospreydcs/dp/gui/*Controller.java`)
 - Handle FXML UI binding and user interactions
 - Delegate business logic to ViewModels
-- Example: `DataGenerationController`, `DataExploreController`, `DataImportController`, `PvExploreController`, `ProviderExploreController`, `MainController`
+- Example: `DataGenerationController`, `DataExploreController`, `DataImportController`, `PvExploreController`, `ProviderExploreController`, `DatasetExploreController`, `AnnotationExploreController`, `MainController`
 
 **ViewModels** (`src/main/java/com/ospreydcs/dp/gui/*ViewModel.java`)
 - Contain UI state and business logic
 - Use JavaFX properties for data binding
-- Example: `DataGenerationViewModel`, `DataExploreViewModel`, `DataImportViewModel`, `PvExploreViewModel`, `ProviderExploreViewModel`, `MainViewModel`
+- Example: `DataGenerationViewModel`, `DataExploreViewModel`, `DataImportViewModel`, `PvExploreViewModel`, `ProviderExploreViewModel`, `DatasetExploreViewModel`, `AnnotationExploreViewModel`, `MainViewModel`
 
 **Views** (`src/main/resources/fxml/*.fxml`)
 - FXML layout definitions
 - Styled with BootstrapFX and custom CSS
-- Example: `data-generation.fxml`, `data-explore.fxml`, `data-import.fxml`, `pv-explore.fxml`, `provider-explore.fxml`, `main-window.fxml`
+- Example: `data-generation.fxml`, `data-explore.fxml`, `data-import.fxml`, `pv-explore.fxml`, `provider-explore.fxml`, `dataset-explore.fxml`, `annotation-explore.fxml`, `main-window.fxml`
 
 ### Data Generation Workflow (Implemented)
 1. **Provider Registration**: Users fill provider details (name, description, tags, attributes)
@@ -250,6 +255,16 @@ The application follows the Model-View-ViewModel pattern:
 6. **Cross-View Navigation**: Seamless navigation to Dataset Builder with all dataset details loaded
 7. **API Integration**: Uses `DpApplication.queryDataSets()` for search and individual dataset loading
 8. **Form Population**: Protobuf DataSet objects converted to UI-friendly DataBlockDetail objects
+
+### Annotation Explore Workflow (Implemented)
+1. **Annotation Query Editor**: Search form with 7 optional fields (Annotation ID, Owner ID, Name, Comment, Tag Value, Attribute Key/Value, Dataset ID)
+2. **Search Execution**: Background task queries annotation metadata with loading indicators and status feedback
+3. **Results Display**: TableView with 10 columns including ID, owner, datasets, name, annotations, comment, tags, attributes, event, calculations data frames
+4. **Interactive Annotation IDs**: Each Annotation ID is a hyperlink that navigates to data-explore view's Annotation Builder tab
+5. **Interactive Calculation Frames**: Each calculation frame name is a hyperlink opening detailed calculation frame dialog
+6. **Automatic Annotation Loading**: Clicking ID hyperlinks triggers background annotation query and form population
+7. **Cross-View Navigation**: Seamless navigation to Annotation Builder with all annotation details loaded
+8. **API Integration**: Uses `DpApplication.queryAnnotations()` for search and annotation loading with nested protobuf handling
 
 ### Dataset Builder Workflow (Implemented)
 1. **Dataset Configuration**: Enter dataset name (required), description (optional), and auto-generated ID field
@@ -360,6 +375,15 @@ Wrapper for protobuf DataSet in TableView displays:
 - Property binding support for JavaFX TableView integration
 - Used in dataset-explore view for dataset discovery and navigation
 - Hyperlink support for Dataset ID column navigation to Dataset Builder
+
+### AnnotationInfoTableRow (`src/main/java/com/ospreydcs/dp/gui/model/AnnotationInfoTableRow.java`)
+Wrapper for protobuf Annotation objects in TableView displays:
+- Annotation ID, owner, name, comment, datasets, tags, attributes, event, calculation frames
+- Property binding support for JavaFX TableView integration
+- Formats complex fields (datasets, attributes, calculation frames) as comma-separated strings
+- Provides `getCalculationDataFrameByName()` method to convert protobuf frames to DataFrameDetails
+- Used in annotation-explore view for annotation discovery and navigation
+- Hyperlink support for Annotation ID and calculation frame columns
 
 ### Global State Management
 `DpApplication` maintains cross-view state with automatic synchronization:
@@ -502,6 +526,16 @@ List<String> tags = List.copyOf(providerComponent.getProviderTags());
 7. **Lifecycle Methods**: Provide clear() methods to reset component state
 8. **Controller Integration**: Update parent controllers to bind to component properties instead of direct FXML fields
 
+### Creating Reusable Dialog Components
+1. **Dialog Structure**: Create both Java controller class and FXML file in `src/main/resources/fxml/components/`
+2. **FXML Layout**: Design responsive dialog content with proper spacing and button placement
+3. **Controller Logic**: Implement Initializable interface with content formatting and data handling
+4. **Static Factory Method**: Provide `showDialog(DataType, Stage)` method for easy instantiation
+5. **Error Handling**: Include comprehensive error handling with fallback dialogs for failures
+6. **Data Conversion**: Handle protobuf to UI object conversions within the dialog controller
+7. **Logging Integration**: Add debug logging for dialog operations and content formatting
+8. **Parent Integration**: Replace inline dialog creation with reusable component calls
+
 ### Cross-View State Management Pattern
 **DpApplication State Architecture:**
 1. **Unified PV Names**: Store `List<String> pvNames` instead of view-specific objects
@@ -524,6 +558,12 @@ List<String> tags = List.copyOf(providerComponent.getProviderTags());
 - Always use `java.time.ZoneId.systemDefault()` for timezone conversions
 - Call `spinner.commitValue()` before reading values to handle uncommitted edits
 - Use initialization flags to prevent listeners from firing during UI setup
+
+### FXML Layout Common Issues
+- **Static Property Syntax**: Use `hgrow="ALWAYS"` in ColumnConstraints, not `HBox.hgrow="ALWAYS"`
+- **Container-Specific Properties**: Static properties like `HBox.hgrow` only apply to child elements within that container type
+- **GridPane vs HBox**: ColumnConstraints use `hgrow` directly, while HBox children use `HBox.hgrow` as static property
+- **Compilation vs Runtime**: FXML syntax errors typically manifest as `PropertyNotFoundException` during FXML loading
 
 ### API Integration Patterns
 - Always check `apiResult.resultStatus.isError` before processing API responses
@@ -580,6 +620,15 @@ When tags/attributes don't appear in the database:
 - Auto-syncs with DpApplication global PV state
 - Navigation integration: "Edit Query" button to return to data-explore view
 - Used in pv-explore view for displaying and managing selected PVs
+
+**CalculationFrameDetailsDialogController** (`src/main/java/com/ospreydcs/dp/gui/component/CalculationFrameDetailsDialogController.java`)
+- Reusable dialog for displaying detailed calculation frame information
+- Shows frame name, timestamps count, data columns with sample values
+- Static factory method: `showDialog(DataFrameDetails, Stage)` for easy usage
+- Formats timestamps using proper epoch seconds/nanoseconds conversion
+- Handles all DataValue types (string, numeric, boolean) with appropriate formatting
+- Used in both data-explore Annotation Builder and annotation-explore views
+- Provides consistent calculation frame viewing experience across the application
 
 **Critical Integration Pattern Implementation:**
 When using reusable components, you MUST inject component references into ViewModels:

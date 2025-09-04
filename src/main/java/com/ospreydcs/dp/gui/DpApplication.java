@@ -5,12 +5,16 @@ import com.ospreydcs.dp.client.ApiClient;
 import com.ospreydcs.dp.client.IngestionClient;
 import com.ospreydcs.dp.client.QueryClient;
 import com.ospreydcs.dp.client.result.*;
+import com.ospreydcs.dp.grpc.v1.annotation.Calculations;
 import com.ospreydcs.dp.grpc.v1.annotation.ExportDataRequest;
 import com.ospreydcs.dp.grpc.v1.common.CalculationsSpec;
+import com.ospreydcs.dp.grpc.v1.common.DataTimestamps;
 import com.ospreydcs.dp.grpc.v1.common.Timestamp;
+import com.ospreydcs.dp.grpc.v1.common.TimestampList;
 import com.ospreydcs.dp.grpc.v1.ingestion.RegisterProviderResponse;
 import com.ospreydcs.dp.grpc.v1.query.QueryTableRequest;
 import com.ospreydcs.dp.gui.model.DataBlockDetail;
+import com.ospreydcs.dp.gui.model.DataFrameDetails;
 import com.ospreydcs.dp.gui.model.PvDetail;
 import com.ospreydcs.dp.service.common.model.ResultStatus;
 import com.ospreydcs.dp.service.common.protobuf.EventMetadataUtility;
@@ -593,13 +597,31 @@ public class DpApplication {
             String comment,
             List<String> tags,
             Map<String, String> attributeMap,
-            String eventName
+            String eventName,
+            List<DataFrameDetails> calculationsDataFrameDetails
     ) {
         // create API event params
         EventMetadataUtility.EventMetadataParams eventParams = null;
         if (eventName != null) {
             eventParams = new EventMetadataUtility.EventMetadataParams(
                     eventName, null, null, null, null);
+        }
+
+        // create API calculations
+        Calculations.Builder calculationsBuilder = null;
+        if (calculationsDataFrameDetails != null && !calculationsDataFrameDetails.isEmpty()) {
+            calculationsBuilder = Calculations.newBuilder();
+            for (DataFrameDetails dataFrameDetails : calculationsDataFrameDetails) {
+                final TimestampList frameTimestampList =
+                        TimestampList.newBuilder().addAllTimestamps(dataFrameDetails.getTimestamps()).build();
+                final DataTimestamps frameDataTimestamps = DataTimestamps.newBuilder().setTimestampList(frameTimestampList).build();
+                final Calculations.CalculationsDataFrame calculationsDataFrame = Calculations.CalculationsDataFrame.newBuilder()
+                        .setName(dataFrameDetails.getName())
+                        .setDataTimestamps(frameDataTimestamps)
+                        .addAllDataColumns(dataFrameDetails.getDataColumns())
+                        .build();
+                calculationsBuilder.addCalculationDataFrames(calculationsDataFrame);
+            }
         }
 
         // create API request params
@@ -614,7 +636,7 @@ public class DpApplication {
                         tags,
                         attributeMap,
                         eventParams,
-                        null
+                        calculationsBuilder.build()
                 );
 
         // call api method

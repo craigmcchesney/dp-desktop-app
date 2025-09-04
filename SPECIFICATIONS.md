@@ -425,3 +425,52 @@ To the right of the list box should be a panel of vertically arranged buttons la
 16.4.5 The return value from queryDataSets() contains a ResultStatus indicating success or failure of the operation.  
 16.4.5.1 If ResultStatus.isError flag is set, the operation failed, and the ResultStatus.errorMsg should be displayed in the status bar.  
 16.4.5.2 If the method succeeds (isError flag is false), display the list of DataSet objects from the method result in the "Dataset Query Results" section's table.
+
+
+
+17. Create the "annotation-explore" view which contains 2 sections, each described in more detail below.  This view closely follows the patterns used in the "dataset-explore" view, except the subject is Annotations instead of Datasets.  Otherwise the view elements and features are almost exactly the same.
+
+17.0 "annotation-explore" view menu navigation: Navigation to the "annotation-explore" view is via the Explore->"Annotations" menu.
+
+17.1 The view's two sections are labeled "Annotation Query Editor" and "Annotation Query Results", and closely follow the patterns used in the dataset-explore view's "Dataset Query Editor" and "Dataset Query Results" sections.
+
+17.1.1 The "Annotation Query Editor" and "Annotation Query Results" sections are arranged vertically, with the former positioned above the latter.
+
+17.2 The "Annotation Query Editor" section displays a form for entering a Dataset query, including the following fields (all brief String input fields):
+
+17.2.1 "Annotation ID",
+17.2.2 "Owner"
+17.2.3 "Related Datasets ID"
+17.2.4 "Related Annotations ID"
+17.2.5 "Name / Comment / Event Text"
+17.2.6 "Tag Value"
+17.2.7 Two related fields for key/value attribute search: "Attribute Key" and "Attribute Value"
+
+17.2.8 The Annotation Query Editor should include a "Search" button.  Handling for that button is described in section 17.4.
+
+17.3 The "Annotation Query Results" section should display a scrollable table of the protobuf API Annotation items (working directory for dp-grpc project with proto files for API definition is ~/dp.fork/dp-java/dp-grpc) returned in the QueryAnnotationsApiResult object returned by the DpApplication.queryAnnotations() method. The table should include the following columns (with mapping between the column and field in the Annotation object and other relevant details):
+
+17.3.1 "ID" - displays Annotation.id.  This column should use a hyperlink on the displayed id value that can be used for navigating to the data-explore view's "Annotation Builder" tab, and showing the fields for the selected Annotation in the Builder.
+17.3.2 "Owner" - displays Annotation.ownerId.
+17.3.3 "Related Datasets" - displays Annotation.dataSetIds. Column should display a comma-separated list of Dataset ids, using a hyperlink for each id that can be used to navigate to the data-explore view's "Dataset Builder" tab, and showing the fields for the selected Dataset in the Builder.
+17.3.4 "Name" - displays Annotation.name.
+17.3.5 "Related Annotations" - displays Annotation.annotationIds.  Column should display a comma-separated list of Annotation ids, using a hyperlink for each id that can be used to navigate to the data-explore view's "Annotation Builder" tab and showing the fields for the selected Annotation in the Builder.
+17.3.6 "Comment" - displays Annotation.comment.
+17.3.7 "Tags" - displays Annotation.tags as comma-separated list of tag values.
+17.3.8 "Attributes" - displays Annotation.attributes.  Display each attribute key/value pair in a comma-separated list like "key1=value1, key2=value2" etc.
+17.3.9 "Event" - displays Annotation.eventMetadata.description.
+17.3.10 "Calculations Data Frames" - displays Annotation.calculations.calculationsDataFrames.  Display a comma-separated list of the CalculationsDataFrame.name values for each of the Calculations object's data frames using a hyperlink for each data frame name.  Clicking the hyperlink for a data frame should open the "Calculation Frame Details" dialog window that opens from the data-explore view's Annotation Builder when the "View" button is clicked for a Calculations Data Frame.
+
+17.4 When the user clicks the "Search" button in the "Annotation Query Editor", call the DpApplication.queryAnnotations() method, passing the value for each of the "Annotation Query Editor's" input fields to the corresponding method parameter.  When the view element is empty, pass null as the value for the corresponding parameter.  Mapping of view elements to method parameters is below:
+
+17.4.0.1 "Annotation ID" field passed to idCriterion parameter
+17.4.0.2 "Owner" field passed to ownerCriterion parameter
+17.4.0.3 "Related Datasets ID" field passed to dataSetsCriterion parameter
+17.4.0.4 "Related Annotations ID" field passed to annotationsCriterion parameter
+17.4.0.5 "Name / Comment / Event Text" fields passed to textCriterion parameter
+17.4.0.6 "Tag Value" field passed to tagsCriterion parameter
+17.4.0.7 "Attribute Key" and "Attribute Value" fields passed to attributeKeyCriterion and attributeValueCriterion, respectively
+
+17.4.1 The return value from queryAnnotations() contains a ResultStatus indicating success or failure of the operation.  
+17.4.1.1 If ResultStatus.isError flag is set, the operation failed, and the ResultStatus.errorMsg should be displayed in the status bar.  
+17.4.1.2 If the method succeeds (isError flag is false), display the list of Annotation objects from the method result in the "Annotation Query Results" section's table.

@@ -1173,9 +1173,10 @@ public class DataExploreController implements Initializable {
         var dataSets = new java.util.ArrayList<>(annotationBuilderViewModel.getDataSets());
         var tags = new java.util.ArrayList<>(tagsComponent.getTags());
         var attributes = new java.util.ArrayList<>(attributesComponent.getAttributes());
+        var calculations = new java.util.ArrayList<>(calculationsDataFramesList.getItems());
         
-        logger.info("Saving annotation: id={}, name={}, comment={}, eventName={}, dataSets={}, tags={}, attributes={}", 
-                   id, name, comment, eventName, dataSets.size(), tags.size(), attributes.size());
+        logger.info("Saving annotation: id={}, name={}, comment={}, eventName={}, dataSets={}, tags={}, attributes={}, calculations={}",
+                   id, name, comment, eventName, dataSets.size(), tags.size(), attributes.size(), calculations.size());
         
         // Step 3: Convert attributes list to Map<String, String>
         Map<String, String> attributeMap = new HashMap<>();
@@ -1217,7 +1218,8 @@ public class DataExploreController implements Initializable {
                     commentToSave,
                     tagsToSave,
                     attributesToSave,
-                    eventNameToSave
+                    eventNameToSave,
+                    calculations
                 );
             
             if (apiResult == null) {
@@ -1971,108 +1973,10 @@ public class DataExploreController implements Initializable {
      * Shows a dialog with details about the selected calculation frame.
      */
     private void showCalculationsDetailsDialog(DataFrameDetails frame) {
-        // Create dialog
-        javafx.scene.control.Dialog<Void> dialog = new javafx.scene.control.Dialog<>();
-        dialog.setTitle("Calculation Frame Details");
-        dialog.setHeaderText("Details for: " + frame.getName());
-        dialog.getDialogPane().getButtonTypes().add(javafx.scene.control.ButtonType.CLOSE);
-        
-        // Create content
-        javafx.scene.control.TextArea contentArea = new javafx.scene.control.TextArea();
-        contentArea.setEditable(false);
-        contentArea.setWrapText(true);
-        contentArea.setPrefSize(600, 400);
-        
-        StringBuilder content = new StringBuilder();
-        content.append("Frame Name: ").append(frame.getName()).append("\n\n");
-        
-        // Add timestamp information
-        if (frame.getTimestamps() != null && !frame.getTimestamps().isEmpty()) {
-            content.append("Timestamps: ").append(frame.getTimestamps().size()).append(" entries\n");
-            content.append("First timestamp: ").append(formatTimestamp(frame.getTimestamps().get(0))).append("\n");
-            if (frame.getTimestamps().size() > 1) {
-                content.append("Last timestamp: ").append(formatTimestamp(frame.getTimestamps().get(frame.getTimestamps().size() - 1))).append("\n");
-            }
-        } else {
-            content.append("Timestamps: None\n");
-        }
-        content.append("\n");
-        
-        // Add column information
-        if (frame.getDataColumns() != null && !frame.getDataColumns().isEmpty()) {
-            content.append("Data Columns (").append(frame.getDataColumns().size()).append("):\n");
-            for (int i = 0; i < frame.getDataColumns().size(); i++) {
-                DataColumn column = frame.getDataColumns().get(i);
-                content.append(String.format("  %d. %s (%d values)\n", 
-                    i + 1, 
-                    column.getName(), 
-                    column.getDataValuesCount()));
-                
-                // Show first few values as sample
-                if (column.getDataValuesCount() > 0) {
-                    content.append("     Sample values: ");
-                    int sampleCount = Math.min(3, column.getDataValuesCount());
-                    for (int j = 0; j < sampleCount; j++) {
-                        if (j > 0) content.append(", ");
-                        content.append(formatDataValue(column.getDataValues(j)));
-                    }
-                    if (column.getDataValuesCount() > 3) {
-                        content.append("...");
-                    }
-                    content.append("\n");
-                }
-            }
-        } else {
-            content.append("Data Columns: None\n");
-        }
-        
-        contentArea.setText(content.toString());
-        dialog.getDialogPane().setContent(contentArea);
-        
-        // Show dialog
-        dialog.showAndWait();
+        // Use the reusable component
+        com.ospreydcs.dp.gui.component.CalculationFrameDetailsDialogController.showDialog(frame, primaryStage);
     }
     
-    /**
-     * Formats a timestamp for display.
-     */
-    private String formatTimestamp(Timestamp timestamp) {
-        try {
-            java.time.Instant instant = java.time.Instant.ofEpochSecond(
-                timestamp.getEpochSeconds(), 
-                timestamp.getNanoseconds()
-            );
-            return instant.toString();
-        } catch (Exception e) {
-            return "Invalid timestamp";
-        }
-    }
-    
-    /**
-     * Formats a DataValue for display.
-     */
-    private String formatDataValue(DataValue dataValue) {
-        try {
-            switch (dataValue.getValueCase()) {
-                case STRINGVALUE:
-                    return "\"" + dataValue.getStringValue() + "\"";
-                case DOUBLEVALUE:
-                    return String.format("%.3f", dataValue.getDoubleValue());
-                case BOOLEANVALUE:
-                    return String.valueOf(dataValue.getBooleanValue());
-                case INTVALUE:
-                    return String.valueOf(dataValue.getIntValue());
-                case ULONGVALUE:
-                    return String.valueOf(dataValue.getUlongValue());
-                case UINTVALUE:
-                    return String.valueOf(dataValue.getUintValue());
-                default:
-                    return "Unknown";
-            }
-        } catch (Exception e) {
-            return "Error";
-        }
-    }
     
     // Helper class to store original data point information for tooltips
     private static class DataPointInfo {
@@ -2192,6 +2096,76 @@ public class DataExploreController implements Initializable {
             
             javafx.application.Platform.runLater(() -> {
                 datasetBuilderViewModel.statusMessageProperty().set(errorMessage);
+            });
+        });
+        
+        // Run the background task
+        Thread loadThread = new Thread(loadTask);
+        loadThread.setDaemon(true);
+        loadThread.start();
+    }
+    
+    /**
+     * Load annotation data into the Annotation Builder tab.
+     * Switches to the Annotation Builder tab and populates form fields with the specified annotation.
+     */
+    public void loadAnnotationIntoBuilder(String annotationId) {
+        logger.debug("Loading annotation into Annotation Builder: {}", annotationId);
+        
+        if (dpApplication == null || annotationBuilderViewModel == null) {
+            logger.warn("Cannot load annotation - dpApplication or annotationBuilderViewModel is null");
+            return;
+        }
+        
+        // Switch to Annotation Builder tab (index 2)
+        javafx.application.Platform.runLater(() -> {
+            editorTabPane.getSelectionModel().select(2);
+            logger.debug("Switched to Annotation Builder tab");
+        });
+        
+        // Query annotation in background task
+        javafx.concurrent.Task<com.ospreydcs.dp.grpc.v1.annotation.QueryAnnotationsResponse.AnnotationsResult.Annotation> loadTask = 
+            new javafx.concurrent.Task<com.ospreydcs.dp.grpc.v1.annotation.QueryAnnotationsResponse.AnnotationsResult.Annotation>() {
+                
+            @Override
+            protected com.ospreydcs.dp.grpc.v1.annotation.QueryAnnotationsResponse.AnnotationsResult.Annotation call() throws Exception {
+                logger.debug("Querying annotation by ID: {}", annotationId);
+                
+                com.ospreydcs.dp.client.result.QueryAnnotationsApiResult apiResult = 
+                    dpApplication.queryAnnotations(annotationId, null, null, null, null, null, null, null);
+                
+                if (apiResult == null) {
+                    throw new RuntimeException("Annotation query failed - null response from service");
+                }
+                
+                if (apiResult.resultStatus.isError) {
+                    throw new RuntimeException("Annotation query failed: " + apiResult.resultStatus.msg);
+                }
+                
+                if (apiResult.annotations == null || apiResult.annotations.isEmpty()) {
+                    throw new RuntimeException("Annotation not found: " + annotationId);
+                }
+                
+                // Return the first (and should be only) annotation
+                return apiResult.annotations.get(0);
+            }
+        };
+        
+        loadTask.setOnSucceeded(e -> {
+            com.ospreydcs.dp.grpc.v1.annotation.QueryAnnotationsResponse.AnnotationsResult.Annotation annotation = loadTask.getValue();
+            javafx.application.Platform.runLater(() -> {
+                annotationBuilderViewModel.loadFromAnnotation(annotation);
+                logger.info("Successfully loaded annotation into builder: {}", annotation.getName());
+            });
+        });
+        
+        loadTask.setOnFailed(e -> {
+            Throwable exception = loadTask.getException();
+            String errorMessage = "Failed to load annotation: " + exception.getMessage();
+            logger.error("Annotation loading failed", exception);
+            
+            javafx.application.Platform.runLater(() -> {
+                annotationBuilderViewModel.statusMessageProperty().set(errorMessage);
             });
         });
         

@@ -155,6 +155,7 @@ public class MainController implements Initializable {
     @FXML
     private void onAnnotations() {
         viewModel.handleAnnotations();
+        switchToView("/fxml/annotation-explore.fxml");
     }
 
     // Utility methods for view management
@@ -201,6 +202,11 @@ public class MainController implements Initializable {
                 dsController.setDpApplication(dpApplication);
                 dsController.setPrimaryStage(primaryStage);
                 dsController.setMainController(this);
+            } else if (controller instanceof AnnotationExploreController) {
+                AnnotationExploreController aeController = (AnnotationExploreController) controller;
+                aeController.setDpApplication(dpApplication);
+                aeController.setPrimaryStage(primaryStage);
+                aeController.setMainController(this);
             }
             
             viewModel.updateStatus("View loaded successfully");
@@ -265,6 +271,34 @@ public class MainController implements Initializable {
             
         } catch (Exception e) {
             logger.error("Failed to load data-explore view with dataset", e);
+            viewModel.updateStatus("Failed to load data explorer: " + e.getMessage());
+        }
+    }
+    
+    public void navigateToDataExploreWithAnnotation(String annotationId) {
+        try {
+            logger.debug("Loading data-explore view with annotation ID: {}", annotationId);
+            viewModel.updateStatus("Loading data explorer...");
+            
+            // Load the data-explore FXML
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/data-explore.fxml"));
+            contentPane.getChildren().clear();
+            contentPane.getChildren().add(loader.load());
+            
+            // Get the controller and inject dependencies
+            DataExploreController deController = (DataExploreController) loader.getController();
+            deController.setDpApplication(dpApplication);
+            deController.setPrimaryStage(primaryStage);
+            deController.setMainController(this);
+            
+            // Load annotation into Annotation Builder tab
+            deController.loadAnnotationIntoBuilder(annotationId);
+            
+            viewModel.updateStatus("Data explorer loaded with annotation");
+            logger.debug("Successfully loaded data-explore view and initiated annotation loading for ID: {}", annotationId);
+            
+        } catch (Exception e) {
+            logger.error("Failed to load data-explore view with annotation", e);
             viewModel.updateStatus("Failed to load data explorer: " + e.getMessage());
         }
     }

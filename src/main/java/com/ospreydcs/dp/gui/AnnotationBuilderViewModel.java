@@ -182,4 +182,66 @@ public class AnnotationBuilderViewModel {
     public BooleanProperty resetButtonEnabledProperty() { return resetButtonEnabled; }
     public BooleanProperty saveButtonEnabledProperty() { return saveButtonEnabled; }
     public BooleanProperty annotationActionsEnabledProperty() { return annotationActionsEnabled; }
+    
+    /**
+     * Load annotation data from a protobuf Annotation object.
+     * Populates the form fields and related data from the loaded annotation.
+     */
+    public void loadFromAnnotation(com.ospreydcs.dp.grpc.v1.annotation.QueryAnnotationsResponse.AnnotationsResult.Annotation annotation) {
+        logger.debug("Loading annotation into builder: {}", annotation.getId());
+        
+        // Clear existing data first
+        resetAnnotation();
+        
+        // Populate form fields
+        setAnnotationId(annotation.getId());
+        setAnnotationName(annotation.getName());
+        setComment(annotation.getComment());
+        
+        // Set event name from event metadata
+        if (annotation.getEventMetadata() != null && 
+            annotation.getEventMetadata().getDescription() != null) {
+            setEventName(annotation.getEventMetadata().getDescription());
+        }
+        
+        // Convert protobuf target datasets to DataSetDetails
+        dataSets.clear();
+        for (String datasetId : annotation.getDataSetIdsList()) {
+            // For now, create a simple DataSetDetail with just the ID
+            // In a full implementation, we would query for the full dataset details
+            DataSetDetail datasetDetail = new DataSetDetail(datasetId, "Dataset " + datasetId, "Loaded from annotation", java.util.List.of());
+            dataSets.add(datasetDetail);
+        }
+        
+        // Load tags
+        tags.clear();
+        tags.addAll(annotation.getTagsList());
+        
+        // Convert protobuf attributes to "key=value" strings
+        attributes.clear();
+        for (com.ospreydcs.dp.grpc.v1.common.Attribute attr : annotation.getAttributesList()) {
+            attributes.add(attr.getName() + "=" + attr.getValue());
+        }
+        
+        // Load calculations data frames
+        calculationsDataFrames.clear();
+        if (annotation.getCalculations() != null && 
+            !annotation.getCalculations().getCalculationDataFramesList().isEmpty()) {
+            
+            for (com.ospreydcs.dp.grpc.v1.annotation.Calculations.CalculationsDataFrame frame : 
+                 annotation.getCalculations().getCalculationDataFramesList()) {
+                
+                DataFrameDetails frameDetail = new DataFrameDetails(
+                    frame.getName(),
+                    frame.getDataTimestamps().getTimestampList().getTimestampsList(),
+                    frame.getDataColumnsList()
+                );
+                calculationsDataFrames.add(frameDetail);
+            }
+        }
+        
+        statusMessage.set("Annotation loaded: " + annotation.getName());
+        logger.info("Successfully loaded annotation: {} with {} datasets, {} tags, {} attributes, {} calculations", 
+                   annotation.getName(), dataSets.size(), tags.size(), attributes.size(), calculationsDataFrames.size());
+    }
 }
