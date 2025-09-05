@@ -1,19 +1,15 @@
 package com.ospreydcs.dp.gui;
 
-import com.ospreydcs.dp.client.AnnotationClient;
-import com.ospreydcs.dp.client.ApiClient;
-import com.ospreydcs.dp.client.IngestionClient;
-import com.ospreydcs.dp.client.QueryClient;
+import com.ospreydcs.dp.client.*;
 import com.ospreydcs.dp.client.result.*;
 import com.ospreydcs.dp.grpc.v1.annotation.Calculations;
 import com.ospreydcs.dp.grpc.v1.annotation.ExportDataRequest;
-import com.ospreydcs.dp.grpc.v1.common.CalculationsSpec;
-import com.ospreydcs.dp.grpc.v1.common.DataTimestamps;
-import com.ospreydcs.dp.grpc.v1.common.Timestamp;
-import com.ospreydcs.dp.grpc.v1.common.TimestampList;
+import com.ospreydcs.dp.grpc.v1.common.*;
 import com.ospreydcs.dp.grpc.v1.ingestion.RegisterProviderResponse;
+import com.ospreydcs.dp.grpc.v1.ingestionstream.PvConditionTrigger;
 import com.ospreydcs.dp.grpc.v1.query.QueryTableRequest;
 import com.ospreydcs.dp.gui.model.DataBlockDetail;
+import com.ospreydcs.dp.gui.model.DataEventSubscription;
 import com.ospreydcs.dp.gui.model.DataFrameDetails;
 import com.ospreydcs.dp.gui.model.PvDetail;
 import com.ospreydcs.dp.service.common.model.ResultStatus;
@@ -42,6 +38,7 @@ public class DpApplication {
     private Instant dataBeginTime = null;
     private Instant dataEndTime = null;
     private List<String> pvNames = null;
+    private List<DataEventSubscription> dataEventSubscriptions = new ArrayList<>();
     
     // application state tracking for home view
     private boolean hasIngestedData = false;
@@ -143,7 +140,8 @@ public class DpApplication {
         api = new ApiClient(
             inprocessServiceEcosystem.ingestionService.getIngestionChannel(),
             inprocessServiceEcosystem.queryService.getQueryChannel(),
-            inprocessServiceEcosystem.annotationService.getChannel()
+            inprocessServiceEcosystem.annotationService.getChannel(),
+            inprocessServiceEcosystem.ingestionStreamService.getChannel()
         );
         if (!api.init()) {
             return false;
@@ -707,6 +705,45 @@ public class DpApplication {
 
         // call api method
         return api.annotationClient.exportData(params);
+    }
+
+    public ResultStatus subscribeDataEvent(
+            PvDetail pvDetail,
+            PvConditionTrigger.PvCondition condition,
+            String dataValue
+    ) {
+        // get PV data type
+        final String pvDataTypeName = pvDetail.getDataType();
+
+        // create protobuf DataValue
+        DataValue triggerValue;
+        if (pvDetail.getDataType().equals("integer")) {
+            triggerValue = DataValue.newBuilder().setIntValue(Integer.valueOf(dataValue)).build();
+        } else {
+            triggerValue = DataValue.newBuilder().setDoubleValue(Double.valueOf(dataValue)).build();
+        }
+
+        // create protobuf PvConditionTrigger
+        final PvConditionTrigger trigger = PvConditionTrigger.newBuilder()
+                .setPvName(pvDetail.getPvName())
+                .setCondition(condition)
+                .setValue(triggerValue)
+                .build();
+
+        // create API request params
+        final IngestionStreamClient.SubscribeDataEventRequestParams params =
+                new IngestionStreamClient.SubscribeDataEventRequestParams(
+                        List.of(trigger), null, null, null);
+
+        // call API method
+        SubscribeDataEventApiResult result = api.ingestionStreamClient.subscribeDataEvent(params, 25);
+
+        // if successful, manage new subscription
+        if ( ! result.resultStatus.isError) {
+            dataEventSubscriptions.add(new DataEventSubscription(trigger, result.subscribeDataEventCall));
+        }
+
+        return result.resultStatus;
     }
 
 }
