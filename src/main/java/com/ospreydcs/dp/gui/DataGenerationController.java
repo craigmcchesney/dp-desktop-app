@@ -3,6 +3,7 @@ package com.ospreydcs.dp.gui;
 import com.ospreydcs.dp.gui.component.AttributesListComponent;
 import com.ospreydcs.dp.gui.component.ProviderDetailsComponent;
 import com.ospreydcs.dp.gui.component.RequestDetailsComponent;
+import com.ospreydcs.dp.gui.component.SubscriptionDetailsComponent;
 import com.ospreydcs.dp.gui.component.TagsListComponent;
 import com.ospreydcs.dp.gui.model.PvDetail;
 import javafx.fxml.FXML;
@@ -25,6 +26,10 @@ public class DataGenerationController implements Initializable {
     // Provider and Request Details components
     @FXML private ProviderDetailsComponent providerDetailsComponent;
     @FXML private RequestDetailsComponent requestDetailsComponent;
+    private SubscriptionDetailsComponent subscriptionDetailsComponent;
+    
+    // Placeholder for programmatically added subscription component
+    @FXML private VBox subscriptionDetailsPlaceholder;
 
     // Generation Details FXML components
     @FXML private DatePicker dataBeginDatePicker;
@@ -62,12 +67,16 @@ public class DataGenerationController implements Initializable {
         // Create the view model
         viewModel = new DataGenerationViewModel();
         
+        // Create subscription details component programmatically
+        createSubscriptionDetailsComponent();
+        
         // Bind UI components to view model properties
         bindUIToViewModel();
         
         // Inject component references into ViewModel (Critical Integration Pattern)
         viewModel.setProviderDetailsComponent(providerDetailsComponent);
         viewModel.setRequestDetailsComponent(requestDetailsComponent);
+        viewModel.setSubscriptionDetailsComponent(subscriptionDetailsComponent);
         
         // Set up event handlers
         setupEventHandlers();
@@ -76,6 +85,21 @@ public class DataGenerationController implements Initializable {
         populateComboBoxes();
         
         logger.debug("DataGenerationController initialized successfully");
+    }
+    
+    /**
+     * Creates the subscription details component programmatically and adds it to the placeholder.
+     * This approach avoids FXML injection issues with custom components.
+     */
+    private void createSubscriptionDetailsComponent() {
+        try {
+            subscriptionDetailsComponent = new SubscriptionDetailsComponent();
+            subscriptionDetailsPlaceholder.getChildren().add(subscriptionDetailsComponent);
+            logger.debug("SubscriptionDetailsComponent created and added to placeholder");
+        } catch (Exception e) {
+            logger.error("Failed to create SubscriptionDetailsComponent", e);
+            throw new RuntimeException("Failed to create subscription details component", e);
+        }
     }
 
     private void bindUIToViewModel() {

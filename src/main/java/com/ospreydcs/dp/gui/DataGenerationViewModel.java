@@ -10,6 +10,7 @@ import org.apache.logging.log4j.Logger;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -60,6 +61,7 @@ public class DataGenerationViewModel {
     // Component references for accessing component data
     private com.ospreydcs.dp.gui.component.ProviderDetailsComponent providerDetailsComponent;
     private com.ospreydcs.dp.gui.component.RequestDetailsComponent requestDetailsComponent;
+    private com.ospreydcs.dp.gui.component.SubscriptionDetailsComponent subscriptionDetailsComponent;
 
     public DataGenerationViewModel() {
         logger.debug("DataGenerationViewModel initialized");
@@ -84,6 +86,11 @@ public class DataGenerationViewModel {
     public void setRequestDetailsComponent(com.ospreydcs.dp.gui.component.RequestDetailsComponent component) {
         this.requestDetailsComponent = component;
         logger.debug("RequestDetailsComponent injected into DataGenerationViewModel");
+    }
+    
+    public void setSubscriptionDetailsComponent(com.ospreydcs.dp.gui.component.SubscriptionDetailsComponent component) {
+        this.subscriptionDetailsComponent = component;
+        logger.debug("SubscriptionDetailsComponent injected into DataGenerationViewModel");
     }
 
     // Provider Details property getters
@@ -299,6 +306,12 @@ public class DataGenerationViewModel {
             java.time.Instant beginInstant = getBeginDateTime().atZone(java.time.ZoneId.systemDefault()).toInstant();
             java.time.Instant endInstant = getEndDateTime().atZone(java.time.ZoneId.systemDefault()).toInstant();
             
+            // Get subscription data from component (Critical Integration Pattern)
+            java.util.List<com.ospreydcs.dp.gui.model.SubscribeDataEventDetail> subscriptions = 
+                subscriptionDetailsComponent != null ? 
+                    subscriptionDetailsComponent.getSubscriptions() : 
+                    new ArrayList<>();
+            
             com.ospreydcs.dp.service.common.model.ResultStatus ingestResult = dpApplication.generateAndIngestData(
                 beginInstant,
                 endInstant,
@@ -306,7 +319,8 @@ public class DataGenerationViewModel {
                 requestAttributesMap,
                 eventName,
                 new java.util.ArrayList<>(pvDetails),
-                getBucketSizeSeconds()
+                getBucketSizeSeconds(),
+                new ArrayList<>(subscriptions)
             );
             
             if (ingestResult.isError) {

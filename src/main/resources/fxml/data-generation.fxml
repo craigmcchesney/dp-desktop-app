@@ -118,6 +118,9 @@
                      </VBox>
                   </HBox>
                </VBox>
+               
+               <!-- Data Event Subscription Details Section - Component will be added programmatically -->
+               <VBox fx:id="subscriptionDetailsPlaceholder" />
             </VBox>
          </VBox>
       </ScrollPane>

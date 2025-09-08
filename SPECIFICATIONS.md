@@ -474,3 +474,27 @@ To the right of the list box should be a panel of vertically arranged buttons la
 17.4.1 The return value from queryAnnotations() contains a ResultStatus indicating success or failure of the operation.  
 17.4.1.1 If ResultStatus.isError flag is set, the operation failed, and the ResultStatus.errorMsg should be displayed in the status bar.  
 17.4.1.2 If the method succeeds (isError flag is false), display the list of Annotation objects from the method result in the "Annotation Query Results" section's table.
+
+
+
+18. We are going to add support for capturing "data event subscriptions" to the data ingestion views.  This task involves 1) creating a re-usable view component for capturing subscription details and 2) integrating the new component into the data-generate and data-import views starting with the data-generate view. The data-import view integration will be done once the data-generate view is integrated with the new component and tested.  I've already added a model object SubscribeDataEventDetail to contain the view information for a subscription, and modified the DpApplication methods used by the views to ingest data to include a list of SubscribeDataEventDetail objects, so that we can process the data event subscriptions before ingesting data.  More details about the re-usable view component and changes to the existing views to use that component are below.
+
+18.1 Re-usable view component for capturing subscription details.  Create a new re-usable component called "subscription-details-component".  The component will contain a list of SubscribeDataEventDetail objects, and a simple form for adding items to the list.  This component should follow the pattern of the data-generate view's list of PV Details in the "Generation Details" section.  The major label for the new component should be "Data Event Subscription Details".
+
+18.1.1 The list section should be positioned to the left of the component.
+18.1.1.1 It should contain a listbox for displaying SubscribeDataEventDetail objects using a displayString that shows the three fields of the SubscribeDataEventDetail (PV name, operator, and value). 
+18.1.1.2 The label for the listbox is "Subscriptions".
+18.1.1.3 A pop-up context menu is available for list items with a single option "Remove", that removes the selected subscription from the list when the menu item is selected.
+
+18.1.2 The form section should be positioned to the right of the list section, labeled "Add Data Event Subscription", and include three fields:
+18.1.2.1 "PV Name" (required) - a String input field for capturing the subscription's PV Name.
+18.1.2.2 "Trigger Condition" (required) - a menu or combobox input for selecting the operator for the subscription's event trigger.  The options in the menu should correspond to the DpApplication enum TriggerCondition.
+18.1.2.3 "Trigger Value" (required) - a String input field for capturing the data value for the subscription's event trigger.
+
+18.1.3 When the form contains a value in all 3 fields, the input is considered valid.  When the form is valid, and the user hits either "enter" or "tab" key, a SubscribeDataEventDetail object is created from the form fields and added to the component's list of subscriptions.
+
+18.2 Integration of subscription-details-component into data-generate view.
+
+18.2.1 The new subscription-details-component should be displayed below the data-generate view's "Generation Details" section, as a new section at the bottom of the scrollable part of the view.
+
+18.2.2 When the data-generate-view's "Generate" button is clicked, the list of SubscribeDataEventDetail objects from the subscription-details-component is passed in the invocation of DpApplication.generateAndIngestData() via the newly added subscriptionDetails parameter.  The DataGenerationViewModel was modified to pass an empty list for that parameter.  That code should be changed to pass the list of SubscribeDataEventDetail objects (which might be an empty list).
