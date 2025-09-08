@@ -4,9 +4,11 @@ import com.ospreydcs.dp.client.result.DataImportResult;
 import com.ospreydcs.dp.client.utility.DataImportUtility;
 import com.ospreydcs.dp.gui.component.ProviderDetailsComponent;
 import com.ospreydcs.dp.gui.component.RequestDetailsComponent;
+import com.ospreydcs.dp.gui.component.SubscriptionDetailsComponent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
+import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import org.apache.logging.log4j.LogManager;
@@ -23,6 +25,10 @@ public class DataImportController implements Initializable {
     // Provider and Request Details components
     @FXML private ProviderDetailsComponent providerDetailsComponent;
     @FXML private RequestDetailsComponent requestDetailsComponent;
+    private SubscriptionDetailsComponent subscriptionDetailsComponent;
+    
+    // Placeholder for programmatically added subscription component
+    @FXML private VBox subscriptionDetailsPlaceholder;
 
     // Import Details FXML components
     @FXML private TextField filePathField;
@@ -47,17 +53,36 @@ public class DataImportController implements Initializable {
         // Create the view model
         viewModel = new DataImportViewModel();
         
+        // Create subscription details component programmatically
+        createSubscriptionDetailsComponent();
+        
         // Bind UI components to view model properties
         bindUIToViewModel();
         
         // Inject component references into ViewModel (Critical Integration Pattern)
         viewModel.setProviderDetailsComponent(providerDetailsComponent);
         viewModel.setRequestDetailsComponent(requestDetailsComponent);
+        viewModel.setSubscriptionDetailsComponent(subscriptionDetailsComponent);
         
         // Set up event handlers
         setupEventHandlers();
         
         logger.debug("DataImportController initialized successfully");
+    }
+    
+    /**
+     * Creates the subscription details component programmatically and adds it to the placeholder.
+     * This approach avoids FXML injection issues with custom components.
+     */
+    private void createSubscriptionDetailsComponent() {
+        try {
+            subscriptionDetailsComponent = new SubscriptionDetailsComponent();
+            subscriptionDetailsPlaceholder.getChildren().add(subscriptionDetailsComponent);
+            logger.debug("SubscriptionDetailsComponent created and added to placeholder");
+        } catch (Exception e) {
+            logger.error("Failed to create SubscriptionDetailsComponent", e);
+            throw new RuntimeException("Failed to create subscription details component", e);
+        }
     }
 
     private void bindUIToViewModel() {

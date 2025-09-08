@@ -497,4 +497,10 @@ To the right of the list box should be a panel of vertically arranged buttons la
 
 18.2.1 The new subscription-details-component should be displayed below the data-generate view's "Generation Details" section, as a new section at the bottom of the scrollable part of the view.
 
-18.2.2 When the data-generate-view's "Generate" button is clicked, the list of SubscribeDataEventDetail objects from the subscription-details-component is passed in the invocation of DpApplication.generateAndIngestData() via the newly added subscriptionDetails parameter.  The DataGenerationViewModel was modified to pass an empty list for that parameter.  That code should be changed to pass the list of SubscribeDataEventDetail objects (which might be an empty list).
+18.2.2 When the data-generate-view's "Generate" button is clicked, the list of SubscribeDataEventDetail objects from the subscription-details-component should be passed in the invocation of DpApplication.generateAndIngestData() via the newly added subscriptionDetails parameter.  The DataGenerationViewModel was modified to pass an empty list for that parameter.  That code should be changed to pass the list of SubscribeDataEventDetail objects (which might be an empty list).
+
+18.3 Integration of subscription-details-component into data-import view.
+
+18.3.1 The new subscription-details-component should be displayed below the data-import view's "Import Details" section, as a new section at the bottom of the scrollable part of the view.
+
+18.3.2 When the data-import-view's "Ingest" button is clicked, the list of SubscribeDataEventDetail objects from the subscription-details-component should be passed in the invocation of DpApplication.ingestImportedData() via the newly added subscriptionDetails parameter.  The DataImportViewModel was previously modified to pass an empty list for that parameter.  That code should be changed to pass the list of SubscribeDataEventDetail objects (which might be an empty list).

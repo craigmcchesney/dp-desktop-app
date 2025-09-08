@@ -42,6 +42,7 @@ public class DataImportViewModel {
     // Component references for accessing component data
     private com.ospreydcs.dp.gui.component.ProviderDetailsComponent providerDetailsComponent;
     private com.ospreydcs.dp.gui.component.RequestDetailsComponent requestDetailsComponent;
+    private com.ospreydcs.dp.gui.component.SubscriptionDetailsComponent subscriptionDetailsComponent;
 
     public DataImportViewModel() {
         logger.debug("DataImportViewModel created");
@@ -99,6 +100,11 @@ public class DataImportViewModel {
     public void setRequestDetailsComponent(com.ospreydcs.dp.gui.component.RequestDetailsComponent component) {
         this.requestDetailsComponent = component;
         logger.debug("RequestDetailsComponent injected into DataImportViewModel");
+    }
+    
+    public void setSubscriptionDetailsComponent(com.ospreydcs.dp.gui.component.SubscriptionDetailsComponent component) {
+        this.subscriptionDetailsComponent = component;
+        logger.debug("SubscriptionDetailsComponent injected into DataImportViewModel");
     }
 
     // Business logic methods
@@ -287,12 +293,18 @@ public class DataImportViewModel {
         
         String eventNameValue = requestDetailsComponent.getEventName();
         
+        // Get subscription details from component (Critical Integration Pattern)
+        java.util.List<com.ospreydcs.dp.gui.model.SubscribeDataEventDetail> subscriptions = 
+            subscriptionDetailsComponent != null ? 
+                subscriptionDetailsComponent.getSubscriptions() : 
+                new ArrayList<>();
+        
         return dpApplication.ingestImportedData(
             List.copyOf(requestTags),
             requestAttributesMap,
             (eventNameValue == null || eventNameValue.trim().isEmpty()) ? null : eventNameValue,
             List.copyOf(ingestionDataFrames),
-            new ArrayList<>()
+            new ArrayList<>(subscriptions)
         );
     }
 

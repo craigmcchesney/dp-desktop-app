@@ -169,6 +169,10 @@ Explore → Data, PVs, Providers, Datasets, Annotations
 - ✅ Annotation search with 7 criteria fields and hyperlink navigation for IDs and calculation frames
 - ✅ Reusable CalculationFrameDetailsDialog component shared between data-explore and annotation-explore
 - ✅ AnnotationInfoTableRow wrapper for protobuf Annotation objects with calculation frame access
+- ✅ Data Event Subscription Details component with reusable subscription management
+- ✅ SubscriptionDetailsComponent integrated into data-generate view with auto-submission form
+- ✅ SubscriptionDetailsComponent integrated into data-import view with identical patterns
+- ✅ Subscription data flow to both DpApplication.generateAndIngestData() and DpApplication.ingestImportedData() APIs for event monitoring
 
 ## GUI Architecture
 
@@ -196,9 +200,10 @@ The application follows the Model-View-ViewModel pattern:
 3. **PV Definition**: Always-visible form for adding process variables with automatic submission
 4. **PV Form Auto-Submission**: Automatically adds PVs when all fields are filled and user presses Enter or moves focus
 5. **Focus Management**: Returns focus to PV Name field after successful addition for rapid multi-PV entry
-6. **Form Validation**: Ensures all required fields are filled and time ranges are valid
-7. **Data Generation**: Uses random walk algorithm to generate time-series data
-8. **Ingestion**: Calls gRPC API to ingest generated data into MongoDB
+6. **Subscription Configuration**: Data event subscription details with trigger conditions and PV monitoring
+7. **Form Validation**: Ensures all required fields are filled and time ranges are valid
+8. **Data Generation**: Uses random walk algorithm to generate time-series data
+9. **Ingestion**: Calls gRPC API to ingest generated data into MongoDB with subscription details
 
 ### Data Import Workflow (Implemented)
 1. **Provider Configuration**: Uses reusable ProviderDetailsComponent for name, description, tags, attributes
@@ -206,11 +211,12 @@ The application follows the Model-View-ViewModel pattern:
 3. **File Selection**: Excel file chooser dialog (.xlsx/.xls formats) with validation
 4. **Data Processing**: Integration with DataImportUtility.importXlsxData() from dp-service
 5. **Frame Display**: Shows imported DataFrameResult objects with human-readable format
-6. **Data Ingestion**: "Ingest" button calls DpApplication.registerProvider() then DpApplication.ingestImportedData()
-7. **Reset Logic**: "Reset" button clears import details; auto-reset on new file selection
-8. **Error Handling**: Comprehensive error handling with status bar feedback and recovery options
-9. **Success Flow**: Returns to home view with confirmation, enables Explore menu items
-10. **Navigation**: Always-enabled Import menu item (unlike conditional Generate menu)
+6. **Subscription Configuration**: SubscriptionDetailsComponent integrated with data event subscription details
+7. **Data Ingestion**: "Ingest" button calls DpApplication.registerProvider() then DpApplication.ingestImportedData() with subscription details
+8. **Reset Logic**: "Reset" button clears import details; auto-reset on new file selection
+9. **Error Handling**: Comprehensive error handling with status bar feedback and recovery options
+10. **Success Flow**: Returns to home view with confirmation, enables Explore menu items
+11. **Navigation**: Always-enabled Import menu item (unlike conditional Generate menu)
 
 ### Data Explore Workflow (Implemented)
 1. **Data Explorer Tools**: Collapsible panel with Query Editor, Dataset Builder, and Annotation Builder tabs
@@ -385,6 +391,13 @@ Wrapper for protobuf Annotation objects in TableView displays:
 - Used in annotation-explore view for annotation discovery and navigation
 - Hyperlink support for Annotation ID and calculation frame columns
 
+### SubscribeDataEventDetail (`src/main/java/com/ospreydcs/dp/gui/model/SubscribeDataEventDetail.java`)
+Represents data event subscription configuration:
+- PV name, trigger condition (EQUAL_TO, GREATER, etc.), trigger value
+- Display string formatting for ListView presentation ("pvName > value")
+- Used for data event monitoring and notification subscriptions
+- Integrated with data generation and import workflows for event-driven data ingestion
+
 ### Global State Management
 `DpApplication` maintains cross-view state with automatic synchronization:
 - Provider ID and name after registration
@@ -505,6 +518,13 @@ List<String> tags = List.copyOf(providerComponent.getProviderTags());
 **Why this happens**: Reusable components manage their own internal state. ViewModel properties are only used for property binding, not data storage. The components never populate the ViewModel properties with their data.
 
 **Required pattern**: Always inject component references into ViewModels and access data directly from component instances before API calls.
+
+### Data Event Subscription Architecture
+**SubscribeDataEventDetail Model**: Contains PV name, trigger condition (enum), and trigger value for event monitoring
+**SubscriptionDetailsComponent**: Reusable component with auto-submission form and ListView management
+**Integration Pattern**: Component data flows to `DpApplication.generateAndIngestData()` and `DpApplication.ingestImportedData()` APIs
+**Event Processing**: Subscriptions processed before data ingestion to enable real-time monitoring
+**Trigger Conditions**: EQUAL_TO, GREATER, GREATER_OR_EQUAL, LESS, LESS_OR_EQUAL from `DpApplication.TriggerCondition` enum
 
 ## Common Development Patterns
 
@@ -630,6 +650,16 @@ When tags/attributes don't appear in the database:
 - Used in both data-explore Annotation Builder and annotation-explore views
 - Provides consistent calculation frame viewing experience across the application
 
+**SubscriptionDetailsComponent** (`src/main/java/com/ospreydcs/dp/gui/component/SubscriptionDetailsComponent.java`)
+- Reusable component for data event subscription management
+- Left panel: ListView displaying subscriptions with context menu removal
+- Right panel: Auto-submission form for adding PV name, trigger condition, trigger value
+- User-friendly trigger condition display ("Equal to (=)", "Greater than (>)", etc.)
+- Auto-submission on Enter/Tab key press with focus management for rapid entry
+- Context menu "Remove" option for subscription management
+- Data access: `getSubscriptions()` method following Critical Integration Pattern
+- Programmatically created to avoid FXML injection issues with custom components
+
 **Critical Integration Pattern Implementation:**
 When using reusable components, you MUST inject component references into ViewModels:
 
@@ -661,6 +691,41 @@ providerDetailsComponent.providerNameProperty().bindBidirectional(viewModel.prov
 // ❌ WRONG - Never try to populate components from ViewModel collections
 providerDetailsComponent.setProviderTags(viewModel.getProviderTags()); // Empty!
 ```
+
+### Data Event Subscription Integration Pattern
+**Component Creation (Programmatic)**:
+```java
+// Avoid FXML injection issues by creating programmatically
+private void createSubscriptionDetailsComponent() {
+    subscriptionDetailsComponent = new SubscriptionDetailsComponent();
+    subscriptionDetailsPlaceholder.getChildren().add(subscriptionDetailsComponent);
+}
+```
+
+**Data Access Pattern**:
+```java
+// ✅ CORRECT - Access subscription data from component for data generation
+List<SubscribeDataEventDetail> subscriptions = subscriptionDetailsComponent.getSubscriptions();
+dpApplication.generateAndIngestData(..., subscriptions);
+
+// ✅ CORRECT - Access subscription data from component for data import
+List<SubscribeDataEventDetail> subscriptions = subscriptionDetailsComponent != null ? 
+    subscriptionDetailsComponent.getSubscriptions() : new ArrayList<>();
+dpApplication.ingestImportedData(..., new ArrayList<>(subscriptions));
+
+// ❌ WRONG - ViewModel properties remain empty
+List<SubscribeDataEventDetail> subscriptions = viewModel.getSubscriptions(); // Empty!
+```
+
+**Complete Integration Checklist**:
+1. Add FXML placeholder: `<VBox fx:id="subscriptionDetailsPlaceholder" />`
+2. Import SubscriptionDetailsComponent in Controller
+3. Add component field and placeholder field to Controller
+4. Create component programmatically in `initialize()` method
+5. Inject component reference into ViewModel
+6. Add component setter method to ViewModel
+7. Update API call methods to use component data instead of empty lists
+8. Test auto-submission form and context menu functionality
 
 ### Excel Import Integration
 **Using DataImportUtility for multi-sheet Excel processing:**
@@ -1007,3 +1072,24 @@ private DataBlockDetail convertDataBlockToDetail(DataBlock protobufDataBlock) {
 - Always clear existing data before loading new dataset to prevent data mixing
 - Provide status feedback throughout the loading process
 - Handle API errors gracefully with user-friendly error messages
+
+### Reusable Component FXML Loading Patterns
+**Correct Component Constructor Pattern**:
+```java
+public MyComponent() {
+    // ✅ CORRECT - Load FXML and set controller, then copy properties
+    FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/fxml/components/my-component.fxml"));
+    fxmlLoader.setController(this);
+    
+    VBox root = fxmlLoader.load();
+    this.getChildren().setAll(root.getChildren());
+    this.setSpacing(root.getSpacing());
+    this.setPadding(root.getPadding());
+    this.getStyleClass().setAll(root.getStyleClass());
+}
+```
+
+**Common FXML Loading Errors**:
+- **"Root value already specified"**: Caused by using `setRoot(this)` - remove this call
+- **Type injection mismatches**: Use programmatic creation instead of `fx:include` for custom components
+- **Timing issues**: Create components before UI binding, inject after component creation

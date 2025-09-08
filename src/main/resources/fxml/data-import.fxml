@@ -46,6 +46,9 @@
                   <ListView fx:id="ingestionDataFramesList" minHeight="200" prefHeight="250" />
                </VBox>
             </VBox>
+            
+            <!-- Data Event Subscription Details Section - Component will be added programmatically -->
+            <VBox fx:id="subscriptionDetailsPlaceholder" />
          </VBox>
       </ScrollPane>
    </center>
