@@ -600,11 +600,14 @@ List<String> tags = List.copyOf(providerComponent.getProviderTags());
 - For performance with large datasets, disable symbols: `setCreateSymbols(false)`
 - Use mouse tracking tooltips instead of per-point tooltips for better performance
 - Implement dynamic data sampling for datasets > 1000 points
+- **Tooltip Coordinate Issues**: Use `.chart-content` selector to find proper plot area bounds for accurate mouse-to-data coordinate transformation
+- **Time Range Precision**: When calculating query intervals, use nanosecond precision (`Duration.toNanos()`) instead of `toSeconds()` to avoid truncating fractional seconds
 
 ### JavaFX Time Handling
 - Always use `java.time.ZoneId.systemDefault()` for timezone conversions
 - Call `spinner.commitValue()` before reading values to handle uncommitted edits
 - Use initialization flags to prevent listeners from firing during UI setup
+- **End Time Inclusivity**: Add nanoseconds (e.g., `.plusNanos(999_999_999)`) to end times created from `LocalTime.of()` to ensure full-second coverage in queries
 
 ### FXML Layout Common Issues
 - **Static Property Syntax**: Use `hgrow="ALWAYS"` in ColumnConstraints, not `HBox.hgrow="ALWAYS"`

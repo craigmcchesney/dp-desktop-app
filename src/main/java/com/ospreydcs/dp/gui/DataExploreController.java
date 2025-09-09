@@ -1512,50 +1512,98 @@ public class DataExploreController implements Initializable {
         logger.debug("Chart mouse tracking enabled");
     }
     
+    private DataPointInfo findNearestPointByValue(double xValue, double yValue) {
+        DataPointInfo nearest = null;
+        double minDistance = Double.MAX_VALUE;
+        
+        // Search through all series for the nearest point
+        for (XYChart.Series<Number, Number> series : resultsChart.getData()) {
+            for (XYChart.Data<Number, Number> dataPoint : series.getData()) {
+                if (dataPoint.getExtraValue() instanceof DataPointInfo) {
+                    double pointX = dataPoint.getXValue().doubleValue();
+                    double pointY = dataPoint.getYValue().doubleValue();
+                    
+                    // Calculate distance (prioritize X-axis distance for time-series)
+                    double deltaX = (pointX - xValue);
+                    double deltaY = (pointY - yValue);
+                    double distance = Math.sqrt(deltaX * deltaX * 4 + deltaY * deltaY); // Weight X more heavily
+                    
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        nearest = (DataPointInfo) dataPoint.getExtraValue();
+                    }
+                }
+            }
+        }
+        
+        logger.debug("Nearest point search: xValue={}, yValue={}, minDistance={}, found={}", 
+            xValue, yValue, minDistance, nearest != null);
+        
+        // Increase sensitivity threshold to be more forgiving
+        if (minDistance < 15.0) { // Increased from 5.0 to be more forgiving
+            return nearest;
+        }
+        
+        return null;
+    }
+
     private DataPointInfo findNearestDataPoint(double mouseX, double mouseY) {
         if (resultsChart.getData().isEmpty()) {
             return null;
         }
         
         try {
-            // Convert mouse coordinates to chart value coordinates
-            Number xNum = chartXAxis.getValueForDisplay(mouseX - chartXAxis.getLayoutX());
-            Number yNum = chartYAxis.getValueForDisplay(mouseY - chartYAxis.getLayoutY());
+            // Try multiple selectors to find the actual plot area
+            javafx.scene.Node plotArea = null;
+            javafx.geometry.Bounds plotBounds = null;
+            
+            // Try different CSS selectors for the plot area
+            String[] selectors = {
+                ".chart-content", 
+                ".plot-content", 
+                ".chart-plot-background",
+                ".chart-series-area-fill",
+                ".chart-series-area-line"
+            };
+            
+            for (String selector : selectors) {
+                plotArea = resultsChart.lookup(selector);
+                if (plotArea != null) {
+                    plotBounds = plotArea.getBoundsInParent();
+                    logger.debug("Found plot area using selector '{}': bounds = {}", selector, plotBounds);
+                    // Use the first one that gives us a reasonable size (height > 100px)
+                    if (plotBounds.getHeight() > 100) {
+                        break;
+                    }
+                    plotArea = null; // Reset if bounds too small
+                }
+            }
+            
+            if (plotArea == null || plotBounds == null) {
+                // Fallback to original calculation if plot area not found
+                logger.debug("No suitable plot area found, using fallback coordinate calculation");
+                Number xNum = chartXAxis.getValueForDisplay(mouseX - chartXAxis.getLayoutX());
+                Number yNum = chartYAxis.getValueForDisplay(mouseY - chartYAxis.getLayoutY());
+                if (xNum == null || yNum == null) return null;
+                return findNearestPointByValue(xNum.doubleValue(), yNum.doubleValue());
+            }
+            
+            // Convert mouse coordinates relative to the plot area
+            double plotMouseX = mouseX - plotBounds.getMinX();
+            double plotMouseY = mouseY - plotBounds.getMinY();
+            
+            logger.debug("Mouse coordinates: chart({},{}) -> plot({},{}) bounds: {}", 
+                mouseX, mouseY, plotMouseX, plotMouseY, plotBounds);
+            
+            // Convert plot-relative coordinates to chart value coordinates  
+            Number xNum = chartXAxis.getValueForDisplay(plotMouseX);
+            Number yNum = chartYAxis.getValueForDisplay(plotMouseY);
             
             if (xNum == null || yNum == null) {
                 return null;
             }
             
-            double xValue = xNum.doubleValue();
-            double yValue = yNum.doubleValue();
-            
-            DataPointInfo nearest = null;
-            double minDistance = Double.MAX_VALUE;
-            
-            // Search through all series for the nearest point
-            for (XYChart.Series<Number, Number> series : resultsChart.getData()) {
-                for (XYChart.Data<Number, Number> dataPoint : series.getData()) {
-                    if (dataPoint.getExtraValue() instanceof DataPointInfo) {
-                        double pointX = dataPoint.getXValue().doubleValue();
-                        double pointY = dataPoint.getYValue().doubleValue();
-                        
-                        // Calculate distance (prioritize X-axis distance for time-series)
-                        double deltaX = (pointX - xValue);
-                        double deltaY = (pointY - yValue);
-                        double distance = Math.sqrt(deltaX * deltaX * 4 + deltaY * deltaY); // Weight X more heavily
-                        
-                        if (distance < minDistance) {
-                            minDistance = distance;
-                            nearest = (DataPointInfo) dataPoint.getExtraValue();
-                        }
-                    }
-                }
-            }
-            
-            // Only return if reasonably close (within chart bounds)
-            if (minDistance < 5.0) { // Adjust sensitivity as needed
-                return nearest;
-            }
+            return findNearestPointByValue(xNum.doubleValue(), yNum.doubleValue());
             
         } catch (Exception e) {
             logger.debug("Error finding nearest data point: {}", e.getMessage());
