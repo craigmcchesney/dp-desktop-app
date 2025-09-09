@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ospreydcs.dp.gui.DataEventExploreController" styleClass="content-pane">
+   <top>
+      <VBox styleClass="view-container">
+         <Label styleClass="section-header" text="Explore Data Event Subscriptions" />
+         <Label styleClass="app-description" text="Manage data event subscriptions and view triggered events for monitoring PV values." />
+      </VBox>
+   </top>
+   
+   <center>
+      <HBox spacing="20" styleClass="view-container">
+         
+         <!-- Left Section: Data Event Subscriptions -->
+         <VBox styleClass="form-container" prefWidth="300" minWidth="250">
+            <Label styleClass="section-header" text="Data Event Subscriptions" />
+            <ListView fx:id="subscriptionsList" minHeight="400" VBox.vgrow="ALWAYS" />
+         </VBox>
+         
+         <!-- Right Section: Two vertical panels -->
+         <VBox spacing="20" HBox.hgrow="ALWAYS">
+            
+            <!-- Top Right: Subscription Builder -->
+            <VBox styleClass="form-container">
+               <Label styleClass="section-header" text="Subscription Builder" />
+               <GridPane hgap="10" vgap="10">
+                  <columnConstraints>
+                     <ColumnConstraints minWidth="160" prefWidth="160" />
+                     <ColumnConstraints hgrow="ALWAYS" />
+                  </columnConstraints>
+                  
+                  <Label text="PV Name: *" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                  <TextField fx:id="pvNameField" promptText="Process variable name" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                  
+                  <Label text="Trigger Condition: *" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                  <ComboBox fx:id="triggerConditionCombo" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                  
+                  <Label text="Trigger Value: *" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                  <TextField fx:id="triggerValueField" promptText="Trigger value" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                  
+                  <Label text="PV Data Type: *" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+                  <ComboBox fx:id="pvDataTypeCombo" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+               </GridPane>
+               
+               <HBox alignment="CENTER_RIGHT" spacing="10">
+                  <Button fx:id="addButton" onAction="#onAdd" styleClass="btn-primary" text="Add" />
+               </HBox>
+            </VBox>
+            
+            <!-- Bottom Right: Data Events -->
+            <VBox styleClass="form-container" VBox.vgrow="ALWAYS">
+               <Label styleClass="section-header" text="Data Events" />
+               <TableView fx:id="eventsTable" minHeight="200" VBox.vgrow="ALWAYS">
+                  <columns>
+                     <TableColumn fx:id="eventTimeColumn" text="Event Time" prefWidth="200" />
+                     <TableColumn fx:id="triggerValueColumn" text="Trigger Value" prefWidth="120" />
+                  </columns>
+               </TableView>
+            </VBox>
+            
+         </VBox>
+      </HBox>
+   </center>
+</BorderPane>

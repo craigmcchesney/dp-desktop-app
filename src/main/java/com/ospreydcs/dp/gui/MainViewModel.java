@@ -28,6 +28,7 @@ public class MainViewModel {
     private final BooleanProperty providerMetadataEnabled = new SimpleBooleanProperty(false);
     private final BooleanProperty datasetsEnabled = new SimpleBooleanProperty(false);
     private final BooleanProperty annotationsEnabled = new SimpleBooleanProperty(false);
+    private final BooleanProperty dataEventsEnabled = new SimpleBooleanProperty(false);
 
     private DpApplication dpApplication;
 
@@ -99,6 +100,10 @@ public class MainViewModel {
         return annotationsEnabled;
     }
 
+    public BooleanProperty dataEventsEnabledProperty() {
+        return dataEventsEnabled;
+    }
+
     // Business logic methods
     public void updateStatus(String status) {
         statusText.set(status);
@@ -133,8 +138,11 @@ public class MainViewModel {
             // Enable annotations menu if data has been ingested
             annotationsEnabled.set(dpApplication.hasIngestedData());
             
-            logger.debug("Menu states updated - dataEnabled: {}, pvMetadataEnabled: {}, providerMetadataEnabled: {}, datasetsEnabled: {}, annotationsEnabled: {}", 
-                dataEnabled.get(), pvMetadataEnabled.get(), providerMetadataEnabled.get(), datasetsEnabled.get(), annotationsEnabled.get());
+            // Enable data events menu if data has been ingested
+            dataEventsEnabled.set(dpApplication.hasIngestedData());
+            
+            logger.debug("Menu states updated - dataEnabled: {}, pvMetadataEnabled: {}, providerMetadataEnabled: {}, datasetsEnabled: {}, annotationsEnabled: {}, dataEventsEnabled: {}", 
+                dataEnabled.get(), pvMetadataEnabled.get(), providerMetadataEnabled.get(), datasetsEnabled.get(), annotationsEnabled.get(), dataEventsEnabled.get());
         }
     }
     
@@ -199,5 +207,10 @@ public class MainViewModel {
     public void handleAnnotations() {
         logger.info("Annotations query action triggered");
         updateStatus("Opening annotations query...");
+    }
+    
+    public void handleDataEvents() {
+        logger.info("Data events action triggered");
+        updateStatus("Opening data event subscriptions manager...");
     }
 }

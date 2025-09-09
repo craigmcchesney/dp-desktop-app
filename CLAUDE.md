@@ -89,7 +89,7 @@ The application integrates with external repositories:
 ```
 File → Connection, Preferences, Exit
 Ingest → Generate, Import (Fixed and Subscribe removed)
-Explore → Data, PVs, Providers, Datasets, Annotations
+Explore → Data, PVs, Providers, Datasets, Annotations, Data Events
 ```
 
 **Menu Item Logic:**
@@ -100,6 +100,7 @@ Explore → Data, PVs, Providers, Datasets, Annotations
 - **Providers**: Navigate to provider-explore view for provider discovery and management
 - **Datasets**: Navigate to dataset-explore view for dataset discovery and Dataset Builder navigation
 - **Annotations**: Navigate to annotation-explore view for annotation discovery and management
+- **Data Events**: Navigate to data-event-explore view for data event subscription management and monitoring
 
 ## Development Guidelines
 
@@ -173,6 +174,11 @@ Explore → Data, PVs, Providers, Datasets, Annotations
 - ✅ SubscriptionDetailsComponent integrated into data-generate view with auto-submission form
 - ✅ SubscriptionDetailsComponent integrated into data-import view with identical patterns
 - ✅ Subscription data flow to both DpApplication.generateAndIngestData() and DpApplication.ingestImportedData() APIs for event monitoring
+- ✅ Data Event Explore view with comprehensive subscription management and event monitoring
+- ✅ Three-section data-event-explore layout with subscription list, builder form, and events table
+- ✅ Custom ListCell and TableCell implementations with hyperlinks for cross-view navigation
+- ✅ Real-time data event subscription processing with background task integration
+- ✅ Event timestamp hyperlinks with automatic query editor navigation and time window setup
 
 ## GUI Architecture
 
@@ -182,17 +188,17 @@ The application follows the Model-View-ViewModel pattern:
 **Controllers** (`src/main/java/com/ospreydcs/dp/gui/*Controller.java`)
 - Handle FXML UI binding and user interactions
 - Delegate business logic to ViewModels
-- Example: `DataGenerationController`, `DataExploreController`, `DataImportController`, `PvExploreController`, `ProviderExploreController`, `DatasetExploreController`, `AnnotationExploreController`, `MainController`
+- Example: `DataGenerationController`, `DataExploreController`, `DataImportController`, `PvExploreController`, `ProviderExploreController`, `DatasetExploreController`, `AnnotationExploreController`, `DataEventExploreController`, `MainController`
 
 **ViewModels** (`src/main/java/com/ospreydcs/dp/gui/*ViewModel.java`)
 - Contain UI state and business logic
 - Use JavaFX properties for data binding
-- Example: `DataGenerationViewModel`, `DataExploreViewModel`, `DataImportViewModel`, `PvExploreViewModel`, `ProviderExploreViewModel`, `DatasetExploreViewModel`, `AnnotationExploreViewModel`, `MainViewModel`
+- Example: `DataGenerationViewModel`, `DataExploreViewModel`, `DataImportViewModel`, `PvExploreViewModel`, `ProviderExploreViewModel`, `DatasetExploreViewModel`, `AnnotationExploreViewModel`, `DataEventExploreViewModel`, `MainViewModel`
 
 **Views** (`src/main/resources/fxml/*.fxml`)
 - FXML layout definitions
 - Styled with BootstrapFX and custom CSS
-- Example: `data-generation.fxml`, `data-explore.fxml`, `data-import.fxml`, `pv-explore.fxml`, `provider-explore.fxml`, `dataset-explore.fxml`, `annotation-explore.fxml`, `main-window.fxml`
+- Example: `data-generation.fxml`, `data-explore.fxml`, `data-import.fxml`, `pv-explore.fxml`, `provider-explore.fxml`, `dataset-explore.fxml`, `annotation-explore.fxml`, `data-event-explore.fxml`, `main-window.fxml`
 
 ### Data Generation Workflow (Implemented)
 1. **Provider Registration**: Users fill provider details (name, description, tags, attributes)
@@ -271,6 +277,20 @@ The application follows the Model-View-ViewModel pattern:
 6. **Automatic Annotation Loading**: Clicking ID hyperlinks triggers background annotation query and form population
 7. **Cross-View Navigation**: Seamless navigation to Annotation Builder with all annotation details loaded
 8. **API Integration**: Uses `DpApplication.queryAnnotations()` for search and annotation loading with nested protobuf handling
+
+### Data Event Explore Workflow (Implemented)
+1. **Data Event Subscriptions Management**: Left panel ListView displaying active subscriptions with custom ListCell format
+2. **Subscription Builder**: Top-right form with PV Name, Trigger Condition, Trigger Value, and PV Data Type fields
+3. **Form Validation**: Real-time validation with button enable/disable based on required field completion
+4. **Subscription Creation**: Background task processing with comprehensive error handling and status feedback
+5. **Subscription Display**: Custom ListCell with hyperlink subscription names and trash button (🗑️) for removal
+6. **Event Loading**: Click subscription hyperlinks to load associated events in bottom-right table
+7. **Events Display**: TableView with Event Time (hyperlink) and Trigger Value columns
+8. **Cross-View Navigation**: Click event timestamp hyperlinks to navigate to data-explore Query Editor
+9. **Automatic Query Setup**: Pre-populate PV name and 60-second time window around event timestamp
+10. **API Integration**: Uses `DpApplication.subscribeDataEvent()`, `cancelDataEventSubscription()`, and `dataEventsForSubscription()` methods
+11. **Menu Integration**: "Data Events" menu item enabled after data ingestion, following established patterns
+12. **Background Processing**: All operations use JavaFX Tasks to prevent UI blocking
 
 ### Dataset Builder Workflow (Implemented)
 1. **Dataset Configuration**: Enter dataset name (required), description (optional), and auto-generated ID field
@@ -390,6 +410,13 @@ Wrapper for protobuf Annotation objects in TableView displays:
 - Provides `getCalculationDataFrameByName()` method to convert protobuf frames to DataFrameDetails
 - Used in annotation-explore view for annotation discovery and navigation
 - Hyperlink support for Annotation ID and calculation frame columns
+
+### DataEventSubscription (`src/main/java/com/ospreydcs/dp/gui/model/DataEventSubscription.java`)
+Wrapper for data event subscription management in data-event-explore view:
+- Contains SubscribeDataEventDetail and subscription metadata
+- Provides display string formatting for ListView presentation
+- Used for subscription lifecycle management (create, display, cancel)
+- Integrates with gRPC IngestionStreamService for real-time event monitoring
 
 ### SubscribeDataEventDetail (`src/main/java/com/ospreydcs/dp/gui/model/SubscribeDataEventDetail.java`)
 Represents data event subscription configuration:

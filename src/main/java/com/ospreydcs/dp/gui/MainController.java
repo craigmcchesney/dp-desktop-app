@@ -36,6 +36,7 @@ public class MainController implements Initializable {
     @FXML private MenuItem providerMetadataMenuItem;
     @FXML private MenuItem datasetsMenuItem;
     @FXML private MenuItem annotationsMenuItem;
+    @FXML private MenuItem dataEventsMenuItem;
 
     // Dependencies
     private MainViewModel viewModel;
@@ -73,6 +74,7 @@ public class MainController implements Initializable {
         providerMetadataMenuItem.disableProperty().bind(viewModel.providerMetadataEnabledProperty().not());
         datasetsMenuItem.disableProperty().bind(viewModel.datasetsEnabledProperty().not());
         annotationsMenuItem.disableProperty().bind(viewModel.annotationsEnabledProperty().not());
+        dataEventsMenuItem.disableProperty().bind(viewModel.dataEventsEnabledProperty().not());
     }
 
     // Dependency injection methods
@@ -157,6 +159,12 @@ public class MainController implements Initializable {
         viewModel.handleAnnotations();
         switchToView("/fxml/annotation-explore.fxml");
     }
+    
+    @FXML
+    private void onDataEvents() {
+        viewModel.handleDataEvents();
+        switchToView("/fxml/data-event-explore.fxml");
+    }
 
     // Utility methods for view management
     public void switchToView(String fxmlPath) {
@@ -207,6 +215,11 @@ public class MainController implements Initializable {
                 aeController.setDpApplication(dpApplication);
                 aeController.setPrimaryStage(primaryStage);
                 aeController.setMainController(this);
+            } else if (controller instanceof DataEventExploreController) {
+                DataEventExploreController deeController = (DataEventExploreController) controller;
+                deeController.setDpApplication(dpApplication);
+                deeController.setPrimaryStage(primaryStage);
+                deeController.setMainController(this);
             }
             
             viewModel.updateStatus("View loaded successfully");
@@ -341,6 +354,10 @@ public class MainController implements Initializable {
             logger.error("Failed to return to home view", e);
             viewModel.updateStatus("Error returning to home view");
         }
+    }
+    
+    public void switchToDataExploreView() {
+        switchToView("/fxml/data-explore.fxml");
     }
     
     private void refreshHomeView() {

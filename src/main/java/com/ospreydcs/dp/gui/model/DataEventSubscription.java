@@ -15,4 +15,16 @@ public class DataEventSubscription {
         this.subscribeDataEventCall = subscribeDataEventCall;
     }
 
+    /**
+     * Returns display string for ListView presentation using the same format as SubscriptionDetailsComponent.
+     */
+    public String getDisplayString() {
+        return subscriptionDetail.getDisplayString();
+    }
+
+    @Override
+    public String toString() {
+        return getDisplayString();
+    }
+
 }

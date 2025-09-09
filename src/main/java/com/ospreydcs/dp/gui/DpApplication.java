@@ -7,6 +7,7 @@ import com.ospreydcs.dp.grpc.v1.annotation.ExportDataRequest;
 import com.ospreydcs.dp.grpc.v1.common.*;
 import com.ospreydcs.dp.grpc.v1.ingestion.RegisterProviderResponse;
 import com.ospreydcs.dp.grpc.v1.ingestionstream.PvConditionTrigger;
+import com.ospreydcs.dp.grpc.v1.ingestionstream.SubscribeDataEventResponse;
 import com.ospreydcs.dp.grpc.v1.query.QueryTableRequest;
 import com.ospreydcs.dp.gui.model.*;
 import com.ospreydcs.dp.service.common.model.ResultStatus;
@@ -100,6 +101,20 @@ public class DpApplication {
         } else {
             this.pvNames = null;
         }
+    }
+
+    // Time range management methods (for data-event-explore navigation)
+    public void setDataBeginTime(Instant beginTime) {
+        this.dataBeginTime = beginTime;
+    }
+
+    public void setDataEndTime(Instant endTime) {
+        this.dataEndTime = endTime;
+    }
+
+    // Data event subscriptions access method
+    public List<DataEventSubscription> getDataEventSubscriptions() {
+        return new ArrayList<>(dataEventSubscriptions);
     }
     
     // Individual PV name management methods (for pv-explore view)
@@ -914,6 +929,35 @@ public class DpApplication {
         }
 
         return result.resultStatus;
+    }
+
+    public ResultStatus cancelDataEventSubscription(DataEventSubscription subscription) {
+
+        // cancel the subscription
+        api.ingestionStreamClient.cancelSubscribeDataEventCall(subscription.subscribeDataEventCall);
+
+        // un-manage the subscription, whether unsubscribe succeeded or failed
+        dataEventSubscriptions.remove(subscription);
+
+        // return error status
+        final IngestionStreamClient.SubscribeDataEventResponseObserver responseObserver =
+                (IngestionStreamClient.SubscribeDataEventResponseObserver)
+                        subscription.subscribeDataEventCall.responseObserver();
+        Objects.requireNonNull(responseObserver);
+        if (responseObserver.isError()) {
+            return new ResultStatus(true, responseObserver.getErrorMessage());
+        } else {
+            return new ResultStatus(false, "");
+        }
+    }
+
+    public List<SubscribeDataEventResponse.Event> dataEventsForSubscription(DataEventSubscription subscription) {
+        // return list of events contained in responseObserver
+        final IngestionStreamClient.SubscribeDataEventResponseObserver responseObserver =
+                (IngestionStreamClient.SubscribeDataEventResponseObserver)
+                        subscription.subscribeDataEventCall.responseObserver();
+        Objects.requireNonNull(responseObserver);
+        return(responseObserver.getEventList());
     }
 
 }
