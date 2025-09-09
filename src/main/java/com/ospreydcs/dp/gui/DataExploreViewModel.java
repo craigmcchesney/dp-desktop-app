@@ -180,7 +180,10 @@ public class DataExploreViewModel {
 
     public LocalDateTime getQueryEndDateTime() {
         LocalTime endTime = LocalTime.of(endHour.get(), endMinute.get(), endSecond.get());
-        return LocalDateTime.of(queryEndDate.get(), endTime);
+        LocalDateTime endDateTime = LocalDateTime.of(queryEndDate.get(), endTime);
+        // Add 999,999,999 nanoseconds (almost 1 full second) to make the end time truly inclusive
+        // This ensures we capture data up to XX:XX:XX.999999999 instead of truncating at XX:XX:XX.000000000
+        return endDateTime.plusNanos(999_999_999);
     }
 
     public void submitQuery() {
@@ -246,10 +249,22 @@ public class DataExploreViewModel {
         Instant beginInstant = getQueryBeginDateTime().atZone(ZoneId.systemDefault()).toInstant();
         Instant endInstant = getQueryEndDateTime().atZone(ZoneId.systemDefault()).toInstant();
         
+        logger.debug("Query time range: {} to {}", beginInstant, endInstant);
+        logger.debug("Query begin epoch seconds: {}, nanos: {}", beginInstant.getEpochSecond(), beginInstant.getNano());
+        logger.debug("Query end epoch seconds: {}, nanos: {}", endInstant.getEpochSecond(), endInstant.getNano());
+        
         // Break query into 1-minute intervals to avoid message size limits
-        long totalDurationSeconds = java.time.Duration.between(beginInstant, endInstant).toSeconds();
+        java.time.Duration totalDuration = java.time.Duration.between(beginInstant, endInstant);
+        long totalDurationSeconds = totalDuration.toSeconds();
+        long totalDurationNanos = totalDuration.toNanos();
         int intervalSeconds = 60; // 1 minute intervals
-        int numberOfIntervals = (int) Math.ceil((double) totalDurationSeconds / intervalSeconds);
+        
+        // Calculate intervals based on total duration in nanoseconds to avoid truncation
+        double totalDurationInSeconds = totalDurationNanos / 1_000_000_000.0;
+        int numberOfIntervals = (int) Math.ceil(totalDurationInSeconds / intervalSeconds);
+        
+        logger.debug("Total duration: {} seconds + {} nanos = {} total seconds", 
+            totalDurationSeconds, totalDuration.toNanosPart(), totalDurationInSeconds);
         
         boolean firstResponse = true;
         int totalRows = 0;
