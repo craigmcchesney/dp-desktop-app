@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" 
+      fx:controller="com.ospreydcs.dp.gui.DatasetExploreController"
+      styleClass="container-fluid"
+      spacing="10.0">
+   
+   <!-- Dataset Query Editor Section -->
+   <VBox spacing="10.0" styleClass="panel, panel-default">
+      <children>
+         <Label styleClass="panel-heading" text="Dataset Query Editor" />
+         
+         <GridPane hgap="10.0" vgap="10.0">
+            <columnConstraints>
+               <ColumnConstraints hgrow="NEVER" minWidth="120.0" prefWidth="120.0" />
+               <ColumnConstraints hgrow="ALWAYS" />
+               <ColumnConstraints hgrow="NEVER" />
+            </columnConstraints>
+            <rowConstraints>
+               <RowConstraints />
+               <RowConstraints />
+               <RowConstraints />
+               <RowConstraints />
+               <RowConstraints />
+            </rowConstraints>
+            
+            <!-- Dataset ID field -->
+            <Label text="Dataset ID:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+            <TextField fx:id="datasetIdField" 
+                      GridPane.columnIndex="1" GridPane.rowIndex="0" 
+                      styleClass="form-control" 
+                      promptText="Enter dataset ID..." />
+            
+            <!-- Owner field -->
+            <Label text="Owner:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+            <TextField fx:id="ownerField" 
+                      GridPane.columnIndex="1" GridPane.rowIndex="1" 
+                      styleClass="form-control" 
+                      promptText="Enter owner ID..." />
+            
+            <!-- Name/Description field -->
+            <Label text="Name / Description:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+            <TextField fx:id="nameDescriptionField" 
+                      GridPane.columnIndex="1" GridPane.rowIndex="2" 
+                      styleClass="form-control" 
+                      promptText="Enter name or description text..." />
+            
+            <!-- PV Name field -->
+            <Label text="PV Name:" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+            <TextField fx:id="pvNameField" 
+                      GridPane.columnIndex="1" GridPane.rowIndex="3" 
+                      styleClass="form-control" 
+                      promptText="Enter PV name..." />
+            
+            <!-- Search button -->
+            <Button fx:id="searchButton" 
+                   onAction="#onSearch" 
+                   text="Search"
+                   GridPane.columnIndex="2" GridPane.rowIndex="0" GridPane.rowSpan="4"
+                   styleClass="btn, btn-primary" />
+            
+         </GridPane>
+         
+         <!-- Status labels -->
+         <HBox spacing="10.0" alignment="CENTER_LEFT">
+            <children>
+               <Label fx:id="searchStatusLabel" 
+                     text="Enter search criteria and click Search" 
+                     styleClass="text-muted" />
+               <ProgressIndicator fx:id="searchProgressIndicator" 
+                                 visible="false" 
+                                 prefWidth="20.0" 
+                                 prefHeight="20.0" />
+            </children>
+         </HBox>
+         
+      </children>
+      <padding>
+         <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+      </padding>
+   </VBox>
+   
+   <!-- Dataset Query Results Section -->
+   <VBox spacing="10.0" styleClass="panel, panel-default" VBox.vgrow="ALWAYS">
+      <children>
+         <Label styleClass="panel-heading" text="Dataset Query Results" />
+         
+         <TableView fx:id="resultsTable" VBox.vgrow="ALWAYS" styleClass="table, table-striped">
+            <columns>
+               <TableColumn fx:id="idColumn" prefWidth="200.0" text="ID" />
+               <TableColumn fx:id="nameColumn" prefWidth="150.0" text="Name" />
+               <TableColumn fx:id="ownerColumn" prefWidth="100.0" text="Owner" />
+               <TableColumn fx:id="descriptionColumn" prefWidth="200.0" text="Description" />
+               <TableColumn fx:id="dataBlocksColumn" prefWidth="400.0" text="Data Blocks" />
+            </columns>
+         </TableView>
+         
+         <!-- Status panel -->
+         <HBox spacing="10.0" alignment="CENTER_LEFT">
+            <children>
+               <Label fx:id="resultCountLabel" 
+                     text="0 dataset(s)" 
+                     styleClass="text-muted" />
+               <Label fx:id="resultsStatusLabel" 
+                     text="Enter search criteria and click Search" 
+                     styleClass="text-muted" />
+            </children>
+         </HBox>
+         
+      </children>
+      <padding>
+         <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+      </padding>
+   </VBox>
+   
+   <padding>
+      <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+   </padding>
+</VBox>

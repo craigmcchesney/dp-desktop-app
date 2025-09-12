@@ -26,11 +26,9 @@ public class MainViewModel {
     private final BooleanProperty dataEnabled = new SimpleBooleanProperty(false);
     private final BooleanProperty pvMetadataEnabled = new SimpleBooleanProperty(false);
     private final BooleanProperty providerMetadataEnabled = new SimpleBooleanProperty(false);
+    private final BooleanProperty datasetsEnabled = new SimpleBooleanProperty(false);
     private final BooleanProperty annotationsEnabled = new SimpleBooleanProperty(false);
-    private final BooleanProperty annotateEnabled = new SimpleBooleanProperty(false);
-    private final BooleanProperty exportEnabled = new SimpleBooleanProperty(false);
-    private final BooleanProperty uploadEnabled = new SimpleBooleanProperty(false);
-    private final BooleanProperty consoleEnabled = new SimpleBooleanProperty(false);
+    private final BooleanProperty dataEventsEnabled = new SimpleBooleanProperty(false);
 
     private DpApplication dpApplication;
 
@@ -40,6 +38,7 @@ public class MainViewModel {
 
     public void setDpApplication(DpApplication dpApplication) {
         this.dpApplication = dpApplication;
+        updateMenuStatesFromApplicationState();
         logger.debug("DpApplication injected into MainViewModel");
     }
 
@@ -93,24 +92,16 @@ public class MainViewModel {
         return providerMetadataEnabled;
     }
 
+    public BooleanProperty datasetsEnabledProperty() {
+        return datasetsEnabled;
+    }
+
     public BooleanProperty annotationsEnabledProperty() {
         return annotationsEnabled;
     }
 
-    public BooleanProperty annotateEnabledProperty() {
-        return annotateEnabled;
-    }
-
-    public BooleanProperty exportEnabledProperty() {
-        return exportEnabled;
-    }
-
-    public BooleanProperty uploadEnabledProperty() {
-        return uploadEnabled;
-    }
-
-    public BooleanProperty consoleEnabledProperty() {
-        return consoleEnabled;
+    public BooleanProperty dataEventsEnabledProperty() {
+        return dataEventsEnabled;
     }
 
     // Business logic methods
@@ -127,6 +118,39 @@ public class MainViewModel {
     public void setConnected(boolean connected) {
         isConnected.set(connected);
         logger.debug("Connection state changed to: {}", connected);
+    }
+    
+    /**
+     * Updates menu item enabled states based on current application state
+     */
+    public void updateMenuStatesFromApplicationState() {
+        if (dpApplication != null) {
+            // Enable data query menu if data has been ingested
+            dataEnabled.set(dpApplication.hasIngestedData());
+            
+            // Enable PV and Provider metadata menus if data has been ingested
+            pvMetadataEnabled.set(dpApplication.hasIngestedData());
+            providerMetadataEnabled.set(dpApplication.hasIngestedData());
+            
+            // Enable datasets menu if data has been ingested
+            datasetsEnabled.set(dpApplication.hasIngestedData());
+            
+            // Enable annotations menu if data has been ingested
+            annotationsEnabled.set(dpApplication.hasIngestedData());
+            
+            // Enable data events menu if data has been ingested
+            dataEventsEnabled.set(dpApplication.hasIngestedData());
+            
+            logger.debug("Menu states updated - dataEnabled: {}, pvMetadataEnabled: {}, providerMetadataEnabled: {}, datasetsEnabled: {}, annotationsEnabled: {}, dataEventsEnabled: {}", 
+                dataEnabled.get(), pvMetadataEnabled.get(), providerMetadataEnabled.get(), datasetsEnabled.get(), annotationsEnabled.get(), dataEventsEnabled.get());
+        }
+    }
+    
+    /**
+     * Public method to refresh menu states - can be called when application state changes
+     */
+    public void refreshMenuStates() {
+        updateMenuStatesFromApplicationState();
     }
 
     // Future method stubs for menu actions
@@ -175,28 +199,18 @@ public class MainViewModel {
         updateStatus("Opening provider metadata browser...");
     }
 
+    public void handleDatasets() {
+        logger.info("Datasets action triggered");
+        updateStatus("Opening datasets browser...");
+    }
+
     public void handleAnnotations() {
         logger.info("Annotations query action triggered");
         updateStatus("Opening annotations query...");
     }
-
-    public void handleAnnotate() {
-        logger.info("Annotate action triggered");
-        updateStatus("Opening annotation tool...");
-    }
-
-    public void handleExport() {
-        logger.info("Export action triggered");
-        updateStatus("Opening export tool...");
-    }
-
-    public void handleUpload() {
-        logger.info("Upload action triggered");
-        updateStatus("Opening calculation upload...");
-    }
-
-    public void handleConsole() {
-        logger.info("Console action triggered");
-        updateStatus("Opening console...");
+    
+    public void handleDataEvents() {
+        logger.info("Data events action triggered");
+        updateStatus("Opening data event subscriptions manager...");
     }
 }

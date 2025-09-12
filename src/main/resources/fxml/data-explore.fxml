@@ -1,0 +1,331 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.chart.*?>
+
+<VBox spacing="20" styleClass="container" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ospreydcs.dp.gui.DataExploreController">
+    <padding>
+        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+    </padding>
+
+    <!-- Query Specification Section -->
+    <VBox fx:id="querySpecificationSection" spacing="15" styleClass="panel, panel-primary">
+        <padding>
+            <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+        </padding>
+        
+        <!-- Section Header with Toggle -->
+        <HBox alignment="CENTER_LEFT" spacing="10">
+            <Button fx:id="toggleSpecificationButton" onAction="#onToggleQuerySpecification" styleClass="btn, btn-link" text="📋 Data Explorer Tools" />
+            <Region HBox.hgrow="ALWAYS" />
+            <Label fx:id="specificationStatusLabel" styleClass="text-muted" text="Required" />
+        </HBox>
+        
+        <!-- Specification Content (collapsible) -->
+        <VBox fx:id="specificationContent" spacing="15">
+            <!-- Query Editor / Dataset Builder TabPane -->
+            <TabPane fx:id="editorTabPane" tabClosingPolicy="UNAVAILABLE" prefHeight="500.0">
+                <!-- Query Editor Tab -->
+                <Tab text="🔍 Query Editor">
+                    <ScrollPane fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED">
+                        <VBox spacing="15">
+                            <padding>
+                                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                            </padding>
+                        
+                        <!-- PV Names Section -->
+                        <VBox spacing="10">
+                            <HBox spacing="10" alignment="CENTER_LEFT">
+                                <Label styleClass="control-label" text="PV Names:" />
+                                <Region HBox.hgrow="ALWAYS" />
+                                <Button fx:id="explorePvsButton" onAction="#onExplorePvs" 
+                                        styleClass="btn, btn-primary" text="Explore PVs" />
+                            </HBox>
+                            <ListView fx:id="pvNamesList" prefHeight="120.0" />
+                        </VBox>
+                        
+                        <!-- Time Range Section -->
+                        <GridPane hgap="10" vgap="10">
+                            <columnConstraints>
+                                <ColumnConstraints minWidth="100" prefWidth="100" />
+                                <ColumnConstraints minWidth="120" prefWidth="120" />
+                                <ColumnConstraints minWidth="60" prefWidth="60" />
+                                <ColumnConstraints minWidth="60" prefWidth="60" />
+                                <ColumnConstraints minWidth="60" prefWidth="60" />
+                                <ColumnConstraints minWidth="100" prefWidth="100" />
+                            </columnConstraints>
+                            
+                            <Label styleClass="control-label" text="Begin Time:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                            <DatePicker fx:id="queryBeginDatePicker" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                            <Spinner fx:id="beginHourSpinner" prefWidth="60.0" GridPane.columnIndex="2" GridPane.rowIndex="0" />
+                            <Spinner fx:id="beginMinuteSpinner" prefWidth="60.0" GridPane.columnIndex="3" GridPane.rowIndex="0" />
+                            <Spinner fx:id="beginSecondSpinner" prefWidth="60.0" GridPane.columnIndex="4" GridPane.rowIndex="0" />
+                            <Label styleClass="text-muted" text="(H:M:S)" GridPane.columnIndex="5" GridPane.rowIndex="0" />
+                            
+                            <Label styleClass="control-label" text="End Time:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                            <DatePicker fx:id="queryEndDatePicker" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                            <Spinner fx:id="endHourSpinner" prefWidth="60.0" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+                            <Spinner fx:id="endMinuteSpinner" prefWidth="60.0" GridPane.columnIndex="3" GridPane.rowIndex="1" />
+                            <Spinner fx:id="endSecondSpinner" prefWidth="60.0" GridPane.columnIndex="4" GridPane.rowIndex="1" />
+                            <Label styleClass="text-muted" text="(H:M:S)" GridPane.columnIndex="5" GridPane.rowIndex="1" />
+                        </GridPane>
+                        
+                        <!-- Action Buttons -->
+                        <HBox spacing="10" alignment="CENTER_LEFT">
+                            <Button fx:id="submitQueryButton" onAction="#onSubmitQuery" styleClass="btn, btn-primary, btn-lg" text="Submit Query" />
+                            <Button fx:id="addToDatasetButton" onAction="#onAddToDataset" styleClass="btn, btn-info" text="Add to Dataset" />
+                            <Button fx:id="cancelQueryButton" onAction="#onCancelQuery" styleClass="btn, btn-default" text="Cancel" />
+                            <Region HBox.hgrow="ALWAYS" />
+                            <Label fx:id="queryStatusLabel" styleClass="text-info" />
+                        </HBox>
+                        </VBox>
+                    </ScrollPane>
+                </Tab>
+                
+                <!-- Dataset Builder Tab -->
+                <Tab text="🏗️ Dataset Builder">
+                    <ScrollPane fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED">
+                        <VBox spacing="20">
+                            <padding>
+                                <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+                            </padding>
+                            
+                            <!-- Dataset Details Section -->
+                            <VBox spacing="15" styleClass="well">
+                                <padding>
+                                    <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+                                </padding>
+                                
+                                <Label styleClass="h4" text="📄 Dataset Details" />
+                                
+                                <!-- ID and Name Fields -->
+                                <HBox spacing="15" alignment="CENTER_LEFT">
+                                    <VBox spacing="5" minWidth="120">
+                                        <Label styleClass="control-label" text="ID:" />
+                                        <TextField fx:id="datasetIdField" editable="false" 
+                                                   promptText="Auto-generated" styleClass="text-muted" />
+                                    </VBox>
+                                    <VBox spacing="5" HBox.hgrow="ALWAYS">
+                                        <Label styleClass="control-label" text="Name: *" />
+                                        <TextField fx:id="datasetNameField" promptText="Enter dataset name (required)" />
+                                    </VBox>
+                                </HBox>
+                                
+                                <!-- Description Field -->
+                                <VBox spacing="5">
+                                    <Label styleClass="control-label" text="Description:" />
+                                    <TextArea fx:id="datasetDescriptionField" promptText="Enter dataset description (optional)" 
+                                              prefRowCount="3" wrapText="true" />
+                                </VBox>
+                            </VBox>
+                            
+                            <!-- Data Blocks Section -->
+                            <VBox spacing="15" styleClass="well">
+                                <padding>
+                                    <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+                                </padding>
+                                
+                                <Label styleClass="h4" text="📊 Data Blocks *" />
+                                
+                                <!-- Data Blocks List with Control Buttons -->
+                                <HBox spacing="10" alignment="CENTER_LEFT">
+                                    <ListView fx:id="dataBlocksList" prefHeight="200.0" HBox.hgrow="ALWAYS">
+                                        <placeholder>
+                                            <Label text="Use the Query Editor tab to add Data Blocks." styleClass="text-muted" />
+                                        </placeholder>
+                                    </ListView>
+                                    <VBox spacing="5" minWidth="100">
+                                        <Button fx:id="removeDataBlockButton" text="Remove" 
+                                                styleClass="btn, btn-warning" disable="true" 
+                                                onAction="#onRemoveDataBlock" maxWidth="Infinity" />
+                                        <Button fx:id="viewDataBlockButton" text="View Data" 
+                                                styleClass="btn, btn-info" disable="true" 
+                                                onAction="#onViewDataBlock" maxWidth="Infinity" />
+                                    </VBox>
+                                </HBox>
+                            </VBox>
+                            
+                            <!-- Action Buttons -->
+                            <HBox spacing="15" alignment="CENTER_LEFT">
+                                <Button fx:id="resetDatasetButton" text="Reset" styleClass="btn, btn-warning" disable="true" onAction="#onResetDataset" />
+                                <Button fx:id="saveDatasetButton" text="Save" styleClass="btn, btn-success" disable="true" onAction="#onSaveDataset" />
+                                <Button fx:id="addToAnnotationButton" text="Add to Annotation" styleClass="btn, btn-info" disable="true" onAction="#onAddToAnnotation" />
+                                <ComboBox fx:id="datasetActionsCombo" disable="true" promptText="Other actions..." />
+                                <Region HBox.hgrow="ALWAYS" />
+                                <Label fx:id="datasetStatusLabel" styleClass="text-muted" text="Ready to build dataset" />
+                            </HBox>
+                        </VBox>
+                    </ScrollPane>
+                </Tab>
+                
+                <!-- Annotation Builder Tab -->
+                <Tab text="🏷️ Annotation Builder">
+                    <ScrollPane fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED">
+                        <VBox spacing="20">
+                            <padding>
+                                <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+                            </padding>
+                            
+                            <!-- Annotation Details Section -->
+                            <VBox spacing="15" styleClass="well">
+                                <padding>
+                                    <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+                                </padding>
+                                
+                                <Label styleClass="h4" text="🏷️ Annotation Details" />
+                                
+                                <!-- ID and Name Fields -->
+                                <HBox spacing="15" alignment="CENTER_LEFT">
+                                    <VBox spacing="5" minWidth="120">
+                                        <Label styleClass="control-label" text="ID:" />
+                                        <TextField fx:id="annotationIdField" editable="false" 
+                                                   promptText="Auto-generated" styleClass="text-muted" />
+                                    </VBox>
+                                    <VBox spacing="5" HBox.hgrow="ALWAYS">
+                                        <Label styleClass="control-label" text="Name: *" />
+                                        <TextField fx:id="annotationNameField" promptText="Enter annotation name (required)" />
+                                    </VBox>
+                                </HBox>
+                                
+                                <!-- Comment Field -->
+                                <VBox spacing="5">
+                                    <Label styleClass="control-label" text="Comment:" />
+                                    <TextArea fx:id="annotationCommentField" promptText="Enter annotation comment (optional)" 
+                                              prefRowCount="3" wrapText="true" />
+                                </VBox>
+                                
+                                <!-- Event Name Field -->
+                                <VBox spacing="5">
+                                    <Label styleClass="control-label" text="Event Name:" />
+                                    <TextField fx:id="annotationEventNameField" promptText="Enter event or experiment name (optional)" />
+                                </VBox>
+                            </VBox>
+                            
+                            <!-- Target Datasets Section -->
+                            <VBox spacing="15" styleClass="well">
+                                <padding>
+                                    <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+                                </padding>
+                                
+                                <Label styleClass="h4" text="🎯 Target Datasets *" />
+                                
+                                <!-- Target Datasets List with Control Buttons -->
+                                <HBox spacing="10" alignment="CENTER_LEFT">
+                                    <ListView fx:id="targetDatasetsList" prefHeight="120.0" HBox.hgrow="ALWAYS">
+                                        <placeholder>
+                                            <Label text="Use the Dataset Builder to create and add Datasets." styleClass="text-muted" />
+                                        </placeholder>
+                                    </ListView>
+                                    <VBox spacing="5" minWidth="100">
+                                        <Button fx:id="removeTargetDatasetButton" text="Remove" 
+                                                styleClass="btn, btn-warning" disable="true" 
+                                                onAction="#onRemoveTargetDataset" maxWidth="Infinity" />
+                                    </VBox>
+                                </HBox>
+                            </VBox>
+                            
+                            <!-- Tags and Attributes Section -->
+                            <HBox fx:id="tagsAttributesContainer" spacing="20"></HBox>
+                            
+                            <!-- Calculations Section -->
+                            <VBox spacing="15" styleClass="well">
+                                <padding>
+                                    <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+                                </padding>
+                                
+                                <Label styleClass="h4" text="🧮 Calculations Data Frames" />
+                                
+                                <!-- Calculations List with Control Buttons -->
+                                <HBox spacing="10" alignment="CENTER_LEFT">
+                                    <ListView fx:id="calculationsDataFramesList" prefHeight="120.0" HBox.hgrow="ALWAYS">
+                                        <placeholder>
+                                            <Label text="Use the Import button to import calculations from Excel files." styleClass="text-muted" />
+                                        </placeholder>
+                                    </ListView>
+                                    <VBox spacing="5" minWidth="100">
+                                        <Button fx:id="importCalculationsButton" text="Import" 
+                                                styleClass="btn, btn-primary" 
+                                                onAction="#onImportCalculations" maxWidth="Infinity" />
+                                        <Button fx:id="viewCalculationsButton" text="View" 
+                                                styleClass="btn, btn-info" disable="true" 
+                                                onAction="#onViewCalculations" maxWidth="Infinity" />
+                                        <Button fx:id="removeCalculationsButton" text="Remove" 
+                                                styleClass="btn, btn-warning" disable="true" 
+                                                onAction="#onRemoveCalculations" maxWidth="Infinity" />
+                                    </VBox>
+                                </HBox>
+                            </VBox>
+                            
+                            <!-- Action Buttons -->
+                            <HBox spacing="15" alignment="CENTER_LEFT">
+                                <Button fx:id="resetAnnotationButton" text="Reset" styleClass="btn, btn-warning" disable="true" onAction="#onResetAnnotation" />
+                                <Button fx:id="saveAnnotationButton" text="Save" styleClass="btn, btn-success" disable="true" onAction="#onSaveAnnotation" />
+                                <ComboBox fx:id="annotationActionsCombo" disable="true" promptText="Other actions..." />
+                                <Region HBox.hgrow="ALWAYS" />
+                                <Label fx:id="annotationStatusLabel" styleClass="text-muted" text="Ready to build annotation" />
+                            </HBox>
+                        </VBox>
+                    </ScrollPane>
+                </Tab>
+            </TabPane>
+        </VBox>
+    </VBox>
+    
+    <!-- Query Results Section -->
+    <VBox fx:id="queryResultsSection" spacing="15" styleClass="panel, panel-success" VBox.vgrow="ALWAYS">
+        <padding>
+            <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+        </padding>
+        
+        <!-- Results Header with Toggle -->
+        <HBox alignment="CENTER_LEFT" spacing="10">
+            <Button fx:id="toggleResultsButton" onAction="#onToggleQueryResults" styleClass="btn, btn-link" text="📊 Data Viewer" />
+            <Region HBox.hgrow="ALWAYS" />
+            <Label fx:id="rowCountLabel" styleClass="text-success" text="0 rows" />
+            <Label fx:id="resultsStatusLabel2" styleClass="text-muted" text="Ready" />
+        </HBox>
+        
+        <!-- Results Content (collapsible) -->
+        <VBox fx:id="resultsContent" spacing="15" VBox.vgrow="ALWAYS">
+            <!-- Results TabPane with Table and Chart views -->
+            <TabPane fx:id="resultsTabPane" VBox.vgrow="ALWAYS" tabClosingPolicy="UNAVAILABLE">
+                <!-- Table Tab -->
+                <Tab text="📋 Table">
+                    <TableView fx:id="resultsTable" VBox.vgrow="ALWAYS">
+                        <placeholder>
+                            <Label text="No query results to display. Use the Query Specification section above to submit a query." />
+                        </placeholder>
+                    </TableView>
+                </Tab>
+                
+                <!-- Chart Tab -->
+                <Tab text="📈 Chart">
+                    <StackPane>
+                        <!-- Chart container -->
+                        <LineChart fx:id="resultsChart" visible="false" managed="false">
+                            <xAxis>
+                                <NumberAxis fx:id="chartXAxis" label="Time (seconds from start)" />
+                            </xAxis>
+                            <yAxis>
+                                <NumberAxis fx:id="chartYAxis" label="Value" />
+                            </yAxis>
+                        </LineChart>
+                        
+                        <!-- Chart placeholder when no data -->
+                        <Label fx:id="chartPlaceholder" text="No data to chart. Submit a query to display time-series data." 
+                               styleClass="text-muted" visible="true" managed="true" />
+                    </StackPane>
+                </Tab>
+            </TabPane>
+            
+            <!-- Results Status -->
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <Label fx:id="resultsStatusLabel" styleClass="text-muted" text="Ready to display query results" />
+                <Region HBox.hgrow="ALWAYS" />
+                <ProgressIndicator fx:id="queryProgressIndicator" visible="false" prefHeight="20.0" prefWidth="20.0" />
+            </HBox>
+        </VBox>
+    </VBox>
+</VBox>

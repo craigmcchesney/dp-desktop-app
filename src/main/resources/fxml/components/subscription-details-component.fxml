@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.*?>
+
+<VBox xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <!-- Section Header -->
+      <Label text="Data Event Subscription Details" styleClass="section-header" />
+      <Separator />
+      
+      <!-- Main Content Area -->
+      <HBox spacing="20" VBox.vgrow="ALWAYS">
+         <!-- Left side: Subscriptions List -->
+         <VBox spacing="5" prefWidth="300" minWidth="250">
+            <Label text="Subscriptions" />
+            <ListView fx:id="subscriptionsList" prefHeight="200" minHeight="150" VBox.vgrow="ALWAYS" />
+         </VBox>
+         
+         <!-- Right side: Add Subscription Form -->
+         <VBox fx:id="subscriptionEntryPanel" spacing="10" styleClass="form-container" prefWidth="400" minWidth="350">
+            <Label text="Add Data Event Subscription" />
+            <GridPane hgap="10" vgap="10">
+               <columnConstraints>
+                  <ColumnConstraints minWidth="120" prefWidth="120" />
+                  <ColumnConstraints hgrow="ALWAYS" />
+               </columnConstraints>
+               
+               <Label text="PV Name: *" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+               <TextField fx:id="pvNameField" promptText="Process variable name" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+               
+               <Label text="Trigger Condition: *" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+               <ComboBox fx:id="triggerConditionCombo" GridPane.columnIndex="1" GridPane.rowIndex="1" maxWidth="Infinity" />
+               
+               <Label text="Trigger Value: *" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+               <TextField fx:id="triggerValueField" promptText="Trigger value" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+            </GridPane>
+         </VBox>
+      </HBox>
+   </children>
+   <padding>
+      <Insets top="10.0" right="10.0" bottom="10.0" left="10.0" />
+   </padding>
+</VBox>

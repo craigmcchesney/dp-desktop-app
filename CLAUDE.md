@@ -15,7 +15,14 @@ mvn package
 ```
 
 ### Run Application
-The main class is configured in pom.xml as `com.ospreydcs.dp.service.ingest.server.IngestionGrpcServer` (shaded JAR), though the actual GUI application main class will be in `com.ospreydcs.dp.gui.*` when implemented.
+```bash
+mvn javafx:run
+```
+Or run the shaded JAR:
+```bash
+java -jar target/dp-desktop-app-1.11.0-shaded.jar
+```
+The main class is `com.ospreydcs.dp.gui.DpDesktopApplication`.
 
 ### Maven Profiles
 - `dev` (default): Development profile
@@ -27,8 +34,11 @@ This project depends on:
 - `dp-grpc` (v1.11.0): gRPC API definitions
 - `dp-service` (v1.11.0): gRPC service implementations
 - MongoDB drivers for data persistence
-- JavaFX (planned) for GUI framework
-- BootstrapFX (planned) for styling
+- JavaFX 21.0.2 for GUI framework
+- BootstrapFX 0.4.0 for styling
+- Log4j2 2.23.1 for logging
+- Apache POI 5.3.0 for Excel export
+- FastCSV 3.3.1 for CSV processing
 
 ## Architecture
 
@@ -38,11 +48,13 @@ This project depends on:
 - High-level application model that abstracts gRPC API invocations
 - Manages in-process service ecosystem and API client
 - Entry point for GUI interactions with backend services
+- Implements provider registration and data generation/ingestion workflows
+- Stores state variables (providerId, providerName, time ranges, PV details) for cross-view usage
 
 **InprocessServiceEcosystem** (`src/main/java/com/ospreydcs/dp/service/inprocess/InprocessServiceEcosystem.java`)
 - Container for in-process gRPC service implementations
 - Manages: IngestionService, QueryService, AnnotationService, IngestionStreamService
-- Initializes MongoDB client interface (uses `dp-test` database)
+- Initializes MongoDB client interface (uses `dp-demo` database by default)
 - Provides service channels for API client connections
 
 ### Service Layer
@@ -76,10 +88,19 @@ The application integrates with external repositories:
 ### GUI Navigation Structure
 ```
 File → Connection, Preferences, Exit
-Ingest → Generate, Fixed, Import, Subscribe  
-Query → Data, PV Metadata, Provider Metadata, Annotations
-Tools → Annotate, Export, Upload, Console
+Ingest → Generate, Import (Fixed and Subscribe removed)
+Explore → Data, PVs, Providers, Datasets, Annotations, Data Events
 ```
+
+**Menu Item Logic:**
+- **Generate**: Conditionally enabled (disabled for remote production connections to prevent fake data contamination)
+- **Import**: Always enabled (real data import is safe for all environments)
+- **Data/Metadata menus**: Enabled after data ingestion (in-process mode) or immediately (remote production mode)
+- **PVs**: Navigate to pv-explore view for PV discovery and management
+- **Providers**: Navigate to provider-explore view for provider discovery and management
+- **Datasets**: Navigate to dataset-explore view for dataset discovery and Dataset Builder navigation
+- **Annotations**: Navigate to annotation-explore view for annotation discovery and management
+- **Data Events**: Navigate to data-event-explore view for data event subscription management and monitoring
 
 ## Development Guidelines
 
@@ -97,10 +118,1024 @@ Tools → Annotate, Export, Upload, Console
 3. Use `DpApplication` wrapper methods to invoke gRPC APIs
 4. Handle MongoDB connections through the shared `MongoInterface`
 
+### Application Lifecycle
+- `DpDesktopApplication` (JavaFX Application) manages application lifecycle
+- `DpApplication` initialized in `init()` phase before JavaFX UI starts
+- MainController coordinates navigation and dependency injection to child controllers
+- Child controllers receive DpApplication, Stage, and MainController references for full integration
+- Application shutdown handled through `DpApplication.fini()` to properly clean up gRPC services
+
 ### Current Implementation Status
 - ✅ In-process service ecosystem container
-- ✅ Basic API client structure (IngestionClient implemented)
-- ✅ High-level application model
-- 🔄 GUI skeleton with JavaFX/FXML (planned)
-- 🔄 Data ingestion UI (planned)
-- 🔄 Query and visualization UI (planned)
+- ✅ API client structure (IngestionClient and QueryClient implemented)
+- ✅ High-level application model with provider registration and data generation
+- ✅ JavaFX/FXML GUI framework with BootstrapFX styling
+- ✅ Main window with navigation and welcome screen
+- ✅ Data generation UI with form validation and PV management
+- ✅ Random walk data generation algorithm
+- ✅ Provider registration and data ingestion workflows
+- ✅ Data explore UI with PV search functionality and tabular results display
+- ✅ PV search panel supporting search by name list and pattern matching
+- ✅ Query results table with dynamic column expansion
+- ✅ Interactive LineChart with time-series visualization and mouse tracking tooltips
+- ✅ Dynamic data sampling and NumberAxis-based chart scaling
+- ✅ Global state synchronization between views for query parameters
+- ✅ Dataset Builder with data block management and save functionality
+- ✅ Cross-tab data transfer between Data Explorer and Dataset Builder
+- ✅ Annotation Builder UI with dataset targeting, tags, attributes, and save functionality
+- ✅ Cross-tab data transfer between Dataset Builder and Annotation Builder
+- ✅ Reusable TagsListComponent and AttributesListComponent for form inputs
+- ✅ Reusable ProviderDetailsComponent and RequestDetailsComponent for section modularity
+- ✅ Component-based architecture for data-generation view enabling code reuse
+- ✅ Data import view with Excel file processing and DataImportUtility integration
+- ✅ Calculations section with multi-sheet Excel import functionality
+- ✅ Data export functionality (CSV, XLSX, HDF5 formats) with automatic file opening
+- ✅ Complete data ingestion workflow for both data generation and data import paths
+- ✅ Ingest and Reset button functionality in data-import view with proper error handling
+- ✅ Critical Integration Pattern implemented across all views using reusable components
+- ✅ Event name handling in Request Details sections for both generation and import workflows
+- ✅ PV Explore view with dedicated PV discovery, search, and management functionality
+- ✅ QueryPvsComponent reusable component for PV list management with individual remove buttons
+- ✅ Integrated navigation between data-explore and pv-explore views
+- ✅ Custom ListCell implementations for individual item actions (remove buttons)
+- ✅ Provider Explore view with dedicated provider discovery, search, and management functionality
+- ✅ Provider search functionality with hyperlink PV names for easy addition to query list
+- ✅ Integrated QueryPvsComponent in provider-explore for consistent PV management across views
+- ✅ Cross-view navigation from pv-explore to provider-explore via Provider Name hyperlinks
+- ✅ Automatic provider search execution when navigating from PV results to provider details
+- ✅ Dataset Explore view with dedicated dataset discovery, search, and management functionality
+- ✅ Dataset ID hyperlink navigation to Dataset Builder tab with automatic dataset loading
+- ✅ Protobuf DataSet to DataBlockDetail conversion for form population
+- ✅ Annotation Explore view with dedicated annotation discovery, search, and management functionality
+- ✅ Annotation search with 7 criteria fields and hyperlink navigation for IDs and calculation frames
+- ✅ Reusable CalculationFrameDetailsDialog component shared between data-explore and annotation-explore
+- ✅ AnnotationInfoTableRow wrapper for protobuf Annotation objects with calculation frame access
+- ✅ Data Event Subscription Details component with reusable subscription management
+- ✅ SubscriptionDetailsComponent integrated into data-generate view with auto-submission form
+- ✅ SubscriptionDetailsComponent integrated into data-import view with identical patterns
+- ✅ Subscription data flow to both DpApplication.generateAndIngestData() and DpApplication.ingestImportedData() APIs for event monitoring
+- ✅ Data Event Explore view with comprehensive subscription management and event monitoring
+- ✅ Three-section data-event-explore layout with subscription list, builder form, and events table
+- ✅ Custom ListCell and TableCell implementations with hyperlinks for cross-view navigation
+- ✅ Real-time data event subscription processing with background task integration
+- ✅ Event timestamp hyperlinks with automatic query editor navigation and time window setup
+
+## GUI Architecture
+
+### MVVM Implementation
+The application follows the Model-View-ViewModel pattern:
+
+**Controllers** (`src/main/java/com/ospreydcs/dp/gui/*Controller.java`)
+- Handle FXML UI binding and user interactions
+- Delegate business logic to ViewModels
+- Example: `DataGenerationController`, `DataExploreController`, `DataImportController`, `PvExploreController`, `ProviderExploreController`, `DatasetExploreController`, `AnnotationExploreController`, `DataEventExploreController`, `MainController`
+
+**ViewModels** (`src/main/java/com/ospreydcs/dp/gui/*ViewModel.java`)
+- Contain UI state and business logic
+- Use JavaFX properties for data binding
+- Example: `DataGenerationViewModel`, `DataExploreViewModel`, `DataImportViewModel`, `PvExploreViewModel`, `ProviderExploreViewModel`, `DatasetExploreViewModel`, `AnnotationExploreViewModel`, `DataEventExploreViewModel`, `MainViewModel`
+
+**Views** (`src/main/resources/fxml/*.fxml`)
+- FXML layout definitions
+- Styled with BootstrapFX and custom CSS
+- Example: `data-generation.fxml`, `data-explore.fxml`, `data-import.fxml`, `pv-explore.fxml`, `provider-explore.fxml`, `dataset-explore.fxml`, `annotation-explore.fxml`, `data-event-explore.fxml`, `main-window.fxml`
+
+### Data Generation Workflow (Implemented)
+1. **Provider Registration**: Users fill provider details (name, description, tags, attributes)
+2. **Request Configuration**: Set time range, tags, attributes, event name
+3. **PV Definition**: Always-visible form for adding process variables with automatic submission
+4. **PV Form Auto-Submission**: Automatically adds PVs when all fields are filled and user presses Enter or moves focus
+5. **Focus Management**: Returns focus to PV Name field after successful addition for rapid multi-PV entry
+6. **Subscription Configuration**: Data event subscription details with trigger conditions and PV monitoring
+7. **Form Validation**: Ensures all required fields are filled and time ranges are valid
+8. **Data Generation**: Uses random walk algorithm to generate time-series data
+9. **Ingestion**: Calls gRPC API to ingest generated data into MongoDB with subscription details
+
+### Data Import Workflow (Implemented)
+1. **Provider Configuration**: Uses reusable ProviderDetailsComponent for name, description, tags, attributes
+2. **Request Configuration**: Uses reusable RequestDetailsComponent for tags, attributes, event name
+3. **File Selection**: Excel file chooser dialog (.xlsx/.xls formats) with validation
+4. **Data Processing**: Integration with DataImportUtility.importXlsxData() from dp-service
+5. **Frame Display**: Shows imported DataFrameResult objects with human-readable format
+6. **Subscription Configuration**: SubscriptionDetailsComponent integrated with data event subscription details
+7. **Data Ingestion**: "Ingest" button calls DpApplication.registerProvider() then DpApplication.ingestImportedData() with subscription details
+8. **Reset Logic**: "Reset" button clears import details; auto-reset on new file selection
+9. **Error Handling**: Comprehensive error handling with status bar feedback and recovery options
+10. **Success Flow**: Returns to home view with confirmation, enables Explore menu items
+11. **Navigation**: Always-enabled Import menu item (unlike conditional Generate menu)
+
+### Data Explore Workflow (Implemented)
+1. **Data Explorer Tools**: Collapsible panel with Query Editor, Dataset Builder, and Annotation Builder tabs
+2. **PV Selection**: Navigate to pv-explore view via "Explore PVs" button for PV discovery
+3. **Time Range Selection**: Set query begin/end times with date pickers and time spinners
+4. **PV Management**: Individual remove buttons (🗑️) next to each PV name in Query Editor
+5. **Query Execution**: Execute query and display results in Data Viewer section
+6. **Data Viewer**: Collapsible section with dynamic table and interactive chart
+7. **Results Display**: Dynamic table with columns for timestamp and selected PVs  
+8. **Chart Visualization**: TabPane with Table and Chart views, LineChart with NumberAxis scaling
+9. **Interactive Features**: Mouse tracking tooltips, dynamic data sampling for performance
+
+### PV Explore Workflow (Implemented)
+1. **Query PVs Component**: Reusable component displaying current PV selection with individual remove buttons
+2. **PV Query Editor**: Search form with pattern matching and name list options
+3. **Search Execution**: Background task queries PV metadata with loading indicators
+4. **Results Display**: TableView with PV details (name, data type, timestamps, sample period)
+5. **PV Selection**: Checkbox-based selection with "Select All" header functionality
+6. **Bulk Operations**: "Add Selected" button (enabled when checkboxes selected)
+7. **Individual Operations**: Hyperlink PV names for direct addition to Query PVs list
+8. **Cross-View Navigation**: "Edit Query" button returns to data-explore view with updated PV list
+9. **Provider Navigation**: Provider Name hyperlinks navigate to provider-explore view with automatic search
+10. **State Synchronization**: PV additions/removals automatically sync with global application state
+
+### Provider Explore Workflow (Implemented)
+1. **Query PVs Component**: Reusable component on left side for PV selection management (same as pv-explore)
+2. **Provider Query Editor**: Search form with 5 optional fields (Provider ID, Name/Description, Tag Value, Attribute Key, Attribute Value)
+3. **Search Execution**: Background task queries provider metadata with loading indicators and status feedback
+4. **Results Display**: TableView with provider details - optimized column order for visibility when truncated:
+   - ID, Name, Description, **PV Names** (positioned early), Tags, Attributes, Buckets
+5. **Interactive PV Names**: Each PV name in results is a hyperlink for direct addition to Query PVs list
+6. **Cross-View Navigation**: "Edit Query" button in QueryPvsComponent returns to data-explore view
+7. **State Synchronization**: PV additions automatically sync with global application state
+8. **API Integration**: Uses `DpApplication.queryProviders()` with null-safe parameter handling
+
+### Dataset Explore Workflow (Implemented)
+1. **Dataset Query Editor**: Search form with 4 optional fields (Dataset ID, Owner, Name/Description, PV Name)
+2. **Search Execution**: Background task queries dataset metadata with loading indicators and status feedback
+3. **Results Display**: TableView with dataset details including ID, name, owner, description, and data blocks count
+4. **Interactive Dataset IDs**: Each Dataset ID is a hyperlink that navigates to data-explore view's Dataset Builder tab
+5. **Automatic Dataset Loading**: Clicking ID hyperlinks triggers background dataset query and form population
+6. **Cross-View Navigation**: Seamless navigation to Dataset Builder with all dataset details loaded
+7. **API Integration**: Uses `DpApplication.queryDataSets()` for search and individual dataset loading
+8. **Form Population**: Protobuf DataSet objects converted to UI-friendly DataBlockDetail objects
+
+### Annotation Explore Workflow (Implemented)
+1. **Annotation Query Editor**: Search form with 7 optional fields (Annotation ID, Owner ID, Name, Comment, Tag Value, Attribute Key/Value, Dataset ID)
+2. **Search Execution**: Background task queries annotation metadata with loading indicators and status feedback
+3. **Results Display**: TableView with 10 columns including ID, owner, datasets, name, annotations, comment, tags, attributes, event, calculations data frames
+4. **Interactive Annotation IDs**: Each Annotation ID is a hyperlink that navigates to data-explore view's Annotation Builder tab
+5. **Interactive Calculation Frames**: Each calculation frame name is a hyperlink opening detailed calculation frame dialog
+6. **Automatic Annotation Loading**: Clicking ID hyperlinks triggers background annotation query and form population
+7. **Cross-View Navigation**: Seamless navigation to Annotation Builder with all annotation details loaded
+8. **API Integration**: Uses `DpApplication.queryAnnotations()` for search and annotation loading with nested protobuf handling
+
+### Data Event Explore Workflow (Implemented)
+1. **Data Event Subscriptions Management**: Left panel ListView displaying active subscriptions with custom ListCell format
+2. **Subscription Builder**: Top-right form with PV Name, Trigger Condition, Trigger Value, and PV Data Type fields
+3. **Form Validation**: Real-time validation with button enable/disable based on required field completion
+4. **Subscription Creation**: Background task processing with comprehensive error handling and status feedback
+5. **Subscription Display**: Custom ListCell with hyperlink subscription names and trash button (🗑️) for removal
+6. **Event Loading**: Click subscription hyperlinks to load associated events in bottom-right table
+7. **Events Display**: TableView with Event Time (hyperlink) and Trigger Value columns
+8. **Cross-View Navigation**: Click event timestamp hyperlinks to navigate to data-explore Query Editor
+9. **Automatic Query Setup**: Pre-populate PV name and 60-second time window around event timestamp
+10. **API Integration**: Uses `DpApplication.subscribeDataEvent()`, `cancelDataEventSubscription()`, and `dataEventsForSubscription()` methods
+11. **Menu Integration**: "Data Events" menu item enabled after data ingestion, following established patterns
+12. **Background Processing**: All operations use JavaFX Tasks to prevent UI blocking
+
+### Dataset Builder Workflow (Implemented)
+1. **Dataset Configuration**: Enter dataset name (required), description (optional), and auto-generated ID field
+2. **Data Block Management**: Collect DataBlockDetail objects from Data Explorer using "Add to Dataset" button
+3. **Data Block Operations**: Remove selected data blocks or view their details in Data Explorer
+4. **Cross-Tab Navigation**: "View Data" button populates Data Explorer fields and switches tabs
+5. **Dataset Persistence**: Save button validates inputs and calls DpApplication.saveDataSet() API
+6. **Validation & Feedback**: Real-time validation with status messages and button enable/disable logic
+7. **State Management**: Preserve dataset details across save operations and tab switches
+
+### Annotation Builder Workflow (Implemented)
+1. **Annotation Configuration**: Enter annotation name (required), comment, and event name (optional)
+2. **Target Dataset Management**: Add datasets from Dataset Builder using "Add to Annotation" button
+3. **Dataset Operations**: Remove selected target datasets from annotation
+4. **Tags & Attributes**: Use reusable components for free-form tag and key-value attribute entry
+5. **Calculations Import**: Import user-defined calculations from Excel files (multi-sheet support)
+6. **Cross-Tab Navigation**: Automatic tab switching when adding datasets from Dataset Builder
+7. **Annotation Persistence**: Save button validates inputs and calls DpApplication.saveAnnotation() API
+8. **Validation & Feedback**: Real-time validation requiring both name and target datasets
+9. **State Management**: Preserve annotation details and auto-generated ID after successful saves
+
+### Calculations Import Workflow (Implemented)
+1. **Excel File Selection**: File chooser dialog supporting .xlsx and .xls formats
+2. **Multi-Sheet Processing**: Automatically imports all sheets as separate DataFrameDetails
+3. **Data Validation**: Validates minimum column requirements (seconds, nanoseconds, data columns)
+4. **Timestamp Format**: Expects first two columns as epoch seconds and nanoseconds
+5. **Data Frame Creation**: Creates DataFrameDetails objects with protobuf DataColumn structures
+6. **Error Handling**: Graceful handling of invalid sheets while processing valid ones
+7. **List Management**: View, remove, and manage imported calculation data frames
+
+### Data Export Workflow (Implemented)
+1. **Dataset Requirement**: Dataset must be saved first to obtain a valid dataset ID
+2. **Export Formats**: Support for CSV, XLSX, and HDF5 output formats
+3. **Format Selection**: "Other actions..." ComboBox in Dataset Builder provides export options
+4. **Export Processing**: Background API call to DpApplication.exportData() method
+5. **File Generation**: Service creates export file and returns file path
+6. **Automatic Opening**: Exported files are automatically opened with native applications
+7. **Status Feedback**: Real-time status updates during export process and completion confirmation
+
+### Key UI Components
+- **Spinner Binding**: Custom binding logic for time spinners to avoid JavaFX binding issues
+- **Dynamic ComboBoxes**: Attribute value combos populate based on selected keys
+- **Context Menus**: Right-click to remove items from lists
+- **Form Validation**: Real-time validation with status messages
+- **Responsive Layout**: GridPane with proper column constraints for label visibility
+- **Interactive Charts**: LineChart with NumberAxis, mouse tracking tooltips, dynamic data sampling
+- **TabPane Architecture**: Multi-level TabPane structure with Data Explorer Tools and Data Viewer (Table/Chart views)
+- **Cross-Tab Data Transfer**: "Add to Dataset" and "View Data" buttons for seamless data flow between tabs
+- **Selection-Based UI**: ListView selections drive button enable/disable state using property binding
+- **Auto-Submission Forms**: PV entry form automatically submits on Enter/focus loss and returns focus for rapid data entry
+
+## Data Model
+
+### PvDetail (`src/main/java/com/ospreydcs/dp/gui/model/PvDetail.java`)
+Represents process variable configuration:
+- PV name, data type (integer/float)
+- Sample period in milliseconds
+- Initial value and maximum step magnitude for random walk
+
+### DataBlockDetail (`src/main/java/com/ospreydcs/dp/gui/model/DataBlockDetail.java`)
+Represents a data block in the Dataset Builder:
+- List of PV names (List<String>)
+- Begin and end time (Instant objects)
+- Human-readable toString() format: "pv-1, pv-2, pv-3: 2025-08-15 11:03:00 -> 2025-08-15 11:05:00"
+- Used for dataset composition and cross-tab data transfer
+
+### DataSetDetail (`src/main/java/com/ospreydcs/dp/gui/model/DataSetDetail.java`)
+Represents a dataset in the Annotation Builder:
+- Dataset ID (String, auto-generated on save)
+- Dataset name, description (String)
+- List of data blocks (List<DataBlockDetail>)
+- Human-readable toString() format: "ID: [dataset-id] - Dataset name - Description snippet - First data block"
+- Used for annotation targeting and cross-tab data transfer
+
+### CalculationsDetails (`src/main/java/com/ospreydcs/dp/gui/model/CalculationsDetails.java`)
+Container for calculation data imported from Excel files:
+- ID (String, for calculations identification)
+- List of data frames (List<DataFrameDetails>)
+- Used in Annotation Builder for calculations management
+
+### DataFrameDetails (`src/main/java/com/ospreydcs/dp/gui/model/DataFrameDetails.java`)
+Represents individual calculation frames from Excel import:
+- Name (String, typically sheet name from Excel)
+- Timestamps (List<Timestamp>, protobuf format)
+- Data columns (List<DataColumn>, protobuf format)
+- Human-readable toString() format: "Frame name - Column1, Column2, Column3..."
+- Created from multi-sheet Excel import using shared DataImportUtility
+
+### PvInfoTableRow (`src/main/java/com/ospreydcs/dp/gui/model/PvInfoTableRow.java`)
+Wrapper for protobuf PvInfo in TableView displays:
+- PV name, provider name, data type, formatted timestamps and sample periods
+- Provider ID access for cross-view navigation (getLastProviderId())
+- Selection state management for bulk operations
+- Property binding support for JavaFX TableView integration
+- Used in pv-explore view for PV discovery and selection with provider navigation
+
+### ProviderInfoTableRow (`src/main/java/com/ospreydcs/dp/gui/model/ProviderInfoTableRow.java`)
+Wrapper for protobuf ProviderInfo in TableView displays:
+- Provider ID, name, description, formatted tags and attributes
+- PV names list extraction for hyperlink functionality
+- Property binding support for JavaFX TableView integration
+- Used in provider-explore view for provider discovery and PV selection
+- Formats attributes as "key1=value1, key2=value2" strings from protobuf Attribute list
+
+### DatasetInfoTableRow (`src/main/java/com/ospreydcs/dp/gui/model/DatasetInfoTableRow.java`)
+Wrapper for protobuf DataSet in TableView displays:
+- Dataset ID, name, owner, description, and data blocks count
+- Property binding support for JavaFX TableView integration
+- Used in dataset-explore view for dataset discovery and navigation
+- Hyperlink support for Dataset ID column navigation to Dataset Builder
+
+### AnnotationInfoTableRow (`src/main/java/com/ospreydcs/dp/gui/model/AnnotationInfoTableRow.java`)
+Wrapper for protobuf Annotation objects in TableView displays:
+- Annotation ID, owner, name, comment, datasets, tags, attributes, event, calculation frames
+- Property binding support for JavaFX TableView integration
+- Formats complex fields (datasets, attributes, calculation frames) as comma-separated strings
+- Provides `getCalculationDataFrameByName()` method to convert protobuf frames to DataFrameDetails
+- Used in annotation-explore view for annotation discovery and navigation
+- Hyperlink support for Annotation ID and calculation frame columns
+
+### DataEventSubscription (`src/main/java/com/ospreydcs/dp/gui/model/DataEventSubscription.java`)
+Wrapper for data event subscription management in data-event-explore view:
+- Contains SubscribeDataEventDetail and subscription metadata
+- Provides display string formatting for ListView presentation
+- Used for subscription lifecycle management (create, display, cancel)
+- Integrates with gRPC IngestionStreamService for real-time event monitoring
+
+### SubscribeDataEventDetail (`src/main/java/com/ospreydcs/dp/gui/model/SubscribeDataEventDetail.java`)
+Represents data event subscription configuration:
+- PV name, trigger condition (EQUAL_TO, GREATER, etc.), trigger value
+- Display string formatting for ListView presentation ("pvName > value")
+- Used for data event monitoring and notification subscriptions
+- Integrated with data generation and import workflows for event-driven data ingestion
+
+### Global State Management
+`DpApplication` maintains cross-view state with automatic synchronization:
+- Provider ID and name after registration
+- Data time ranges (begin/end instants) - synced from query UI changes
+- List of PV names (List<String>) - unified storage for generated and imported PV names
+- Real-time listeners in DataExploreController update global state when UI changes
+- Global state is restored when navigating between views
+- Used for data generation, data import, query operations, and future annotation/export features
+
+**Critical Implementation Details:**
+- Timezone handling uses `java.time.ZoneId.systemDefault()` for consistent UI ↔ global state conversion
+- Spinner value commitment via `commitValue()` before reading values to handle JavaFX uncommitted edits
+- Initialization order: restore UI from global state BEFORE injecting into ViewModels to prevent listener overwrites
+
+## Shared Utilities Integration
+
+### DataImportUtility
+Located in `dp-service` dependency (`~/dp.fork/dp-java/dp-service`):
+- **Multi-Sheet Excel Import**: `DataImportUtility.importXlsxData(String filePath)`
+- **Input Format**: First two columns must be epoch seconds and nanoseconds
+- **Returns**: `DataImportResult` with list of `DataFrameResult` objects (one per sheet)
+- **Error Handling**: Skips invalid sheets/rows, continues processing valid data
+- **Shared Usage**: Used by Calculations import, Data Import view, and future PV ingestion features
+- **Dependencies**: Requires updated `dp-service` to be installed to local Maven repository
+- **Integration Pattern**: Import `com.ospreydcs.dp.client.result.DataImportResult` for result handling
+
+### Dependency Updates
+When modifying shared utilities in `dp-service`:
+```bash
+cd ~/dp.fork/dp-java/dp-service
+mvn clean install -DskipTests
+cd ~/dp.fork/dp-java/dp-desktop-app
+mvn clean compile
+```
+
+### Testing and Development Workflow
+```bash
+# Build and run application for testing
+mvn clean compile javafx:run
+
+# Package application for deployment testing
+mvn clean package
+java -jar target/dp-desktop-app-1.11.0-shaded.jar
+
+# Update shared utilities workflow (when modifying dp-service dependency)
+cd ~/dp.fork/dp-java/dp-service
+mvn clean install -DskipTests
+cd ~/dp.fork/dp-java/dp-desktop-app
+mvn clean compile
+```
+
+## MongoDB Integration
+- Default database: `dp-demo`
+- Managed through `InprocessServiceEcosystem`
+- Data persistence handled by gRPC service layer
+- MongoDB drivers: sync, reactive streams, core, and BSON
+
+## Debugging and Logging
+- Log4j2 configuration in `src/main/resources/log4j2.xml` (currently set to DEBUG level)
+- Key logger names: `com.ospreydcs.dp.gui.*` for UI components
+- Third-party library logging suppressed: `io.grpc.netty` (ERROR), `io.netty.util` (OFF), `org.mongodb.driver` (ERROR)
+- JavaFX UI thread operations logged with method entry/exit points
+- Global state synchronization extensively logged for troubleshooting
+- Component data access patterns extensively logged for debugging Critical Integration Pattern violations
+
+## Critical Architecture Concepts
+
+### Application State Flow
+The application maintains state through multiple layers that must be understood for effective development:
+
+1. **DpApplication Layer**: Central state management for cross-view data sharing
+   - Manages provider registration state (`providerId`, `providerName`)
+   - Tracks ingested data state (`hasIngestedData`, `totalPvsIngested`, `pvNames`)
+   - Handles time ranges and operation results for UI synchronization
+   - Controls menu enablement through state flags
+
+2. **ViewModel Layer**: View-specific business logic and UI state
+   - Contains JavaFX properties for data binding
+   - Handles form validation and user interactions
+   - Communicates with DpApplication for backend operations
+   - Manages background tasks for non-blocking operations
+
+3. **Component Layer**: Reusable UI components with encapsulated state
+   - Must be accessed through component methods, not parent ViewModels
+   - Handle their own data validation and user interactions
+   - Provide property binding for external integration
+
+### Data Ingestion Architecture
+Two parallel workflows exist for data ingestion:
+
+**Data Generation Path**: UI Form → PvDetail objects → Random walk generation → IngestionClient.ingestData()
+**Data Import Path**: Excel file → DataImportUtility → DataFrameResult objects → IngestionClient.ingestData()
+
+Both paths converge at the same gRPC ingestion API but handle different data sources and processing requirements.
+
+### Cross-View Navigation Patterns
+The application uses a hub-and-spoke navigation model with cross-exploration capabilities:
+- **Home View**: Central hub with application state display and interactive navigation hints
+- **Interactive Hints**: Home view contains clickable hyperlinks for key navigation paths (Ingest→Generate, Ingest→Import, Explore→Data, etc.)
+- **State-Dependent Guidance**: Different hint sets based on application state (pre-ingestion vs post-ingestion)
+- **Feature Views**: Data generation, import, exploration - all return to home on completion
+- **Cross-Exploration**: Direct navigation between pv-explore and provider-explore views via hyperlinks
+- **Automatic Search**: Navigation includes automatic search execution with pre-populated parameters
+- **State Synchronization**: Global state updates trigger menu enablement and home view updates
+- **Background Operations**: Long-running operations use JavaFX Task with UI thread synchronization
+
+### Component Data Access Anti-Pattern (Critical)
+**NEVER access reusable component data through ViewModel properties.** This is the most common architectural error in this codebase:
+
+```java
+// ❌ WRONG - This pattern will result in empty data being passed to APIs
+Map<String, String> attrs = convertAttributesToMap(viewModel.getProviderAttributes()); // Empty!
+List<String> tags = List.copyOf(viewModel.getProviderTags()); // Empty!
+
+// ✅ CORRECT - Always get data directly from component instances
+Map<String, String> attrs = convertAttributesToMap(providerComponent.getProviderAttributes());
+List<String> tags = List.copyOf(providerComponent.getProviderTags());
+```
+
+**Why this happens**: Reusable components manage their own internal state. ViewModel properties are only used for property binding, not data storage. The components never populate the ViewModel properties with their data.
+
+**Required pattern**: Always inject component references into ViewModels and access data directly from component instances before API calls.
+
+### Data Event Subscription Architecture
+**SubscribeDataEventDetail Model**: Contains PV name, trigger condition (enum), and trigger value for event monitoring
+**SubscriptionDetailsComponent**: Reusable component with auto-submission form and ListView management
+**Integration Pattern**: Component data flows to `DpApplication.generateAndIngestData()` and `DpApplication.ingestImportedData()` APIs
+**Event Processing**: Subscriptions processed before data ingestion to enable real-time monitoring
+**Trigger Conditions**: EQUAL_TO, GREATER, GREATER_OR_EQUAL, LESS, LESS_OR_EQUAL from `DpApplication.TriggerCondition` enum
+
+## Common Development Patterns
+
+### Adding New Views
+1. Create FXML layout in `src/main/resources/fxml/`
+2. Create Controller class extending JavaFX controller patterns
+3. Create ViewModel class with JavaFX properties for data binding
+4. Add navigation integration in MainController
+5. Inject DpApplication dependency for service access
+6. Follow initialization order: UI restoration before ViewModel injection
+
+### Creating Reusable Components
+1. **Component Structure**: Create both Java class and FXML file in `src/main/resources/fxml/components/`
+2. **Extend VBox**: Component class extends VBox and implements Initializable
+3. **FXML Loading**: Use FXMLLoader in constructor to load component's FXML and copy properties
+4. **Property Binding**: Create StringProperty fields for external binding (e.g., `eventNameProperty()`)
+5. **Data Access Methods**: Provide getter/setter methods for embedded components (e.g., `getProviderTags()`)
+6. **Component APIs**: Always access data through component methods, not parent ViewModel
+7. **Lifecycle Methods**: Provide clear() methods to reset component state
+8. **Controller Integration**: Update parent controllers to bind to component properties instead of direct FXML fields
+
+### Creating Reusable Dialog Components
+1. **Dialog Structure**: Create both Java controller class and FXML file in `src/main/resources/fxml/components/`
+2. **FXML Layout**: Design responsive dialog content with proper spacing and button placement
+3. **Controller Logic**: Implement Initializable interface with content formatting and data handling
+4. **Static Factory Method**: Provide `showDialog(DataType, Stage)` method for easy instantiation
+5. **Error Handling**: Include comprehensive error handling with fallback dialogs for failures
+6. **Data Conversion**: Handle protobuf to UI object conversions within the dialog controller
+7. **Logging Integration**: Add debug logging for dialog operations and content formatting
+8. **Parent Integration**: Replace inline dialog creation with reusable component calls
+
+### Cross-View State Management Pattern
+**DpApplication State Architecture:**
+1. **Unified PV Names**: Store `List<String> pvNames` instead of view-specific objects
+2. **Data Generation Flow**: Extract PV names from PvDetail objects after successful ingestion
+3. **Data Import Flow**: Call `dpApplication.setPvNames()` after successful import ingestion
+4. **Query View Integration**: Use `dpApplication.getPvNames()` for initialization regardless of data source
+5. **Separation of Concerns**: Keep generation-specific PvDetail objects in DataGenerationViewModel
+6. **Consistent Timing**: Only update global state after successful operations (generation/ingestion)
+
+**Benefits**: Unified cross-view sharing, clean separation of UI-specific vs. shared state, support for multiple data sources
+
+### Chart Integration
+- Use NumberAxis instead of CategoryAxis for time-series data
+- Implement `calculateOptimalTickUnit()` for proper axis scaling
+- For performance with large datasets, disable symbols: `setCreateSymbols(false)`
+- Use mouse tracking tooltips instead of per-point tooltips for better performance
+- Implement dynamic data sampling for datasets > 1000 points
+- **Tooltip Coordinate Issues**: Use `.chart-content` selector to find proper plot area bounds for accurate mouse-to-data coordinate transformation
+- **Time Range Precision**: When calculating query intervals, use nanosecond precision (`Duration.toNanos()`) instead of `toSeconds()` to avoid truncating fractional seconds
+
+### JavaFX Time Handling
+- Always use `java.time.ZoneId.systemDefault()` for timezone conversions
+- Call `spinner.commitValue()` before reading values to handle uncommitted edits
+- Use initialization flags to prevent listeners from firing during UI setup
+- **End Time Inclusivity**: Add nanoseconds (e.g., `.plusNanos(999_999_999)`) to end times created from `LocalTime.of()` to ensure full-second coverage in queries
+
+### JavaFX Selection Model Timing Issues
+**Problem**: ComboBox or ListView selection operations can cause `IndexOutOfBoundsException` when multiple selection models interact
+**Solution**: Defer selection operations using `Platform.runLater()` to avoid timing conflicts:
+```java
+// ❌ WRONG - Can cause IndexOutOfBoundsException in complex UIs
+comboBox.getSelectionModel().clearSelection();
+
+// ✅ CORRECT - Defer to avoid timing conflicts
+javafx.application.Platform.runLater(() -> {
+    comboBox.getSelectionModel().clearSelection();
+});
+```
+**When to use**: After actions that trigger multiple UI updates (exports, data operations, tab switches)
+
+### FXML Layout Common Issues
+- **Static Property Syntax**: Use `hgrow="ALWAYS"` in ColumnConstraints, not `HBox.hgrow="ALWAYS"`
+- **Container-Specific Properties**: Static properties like `HBox.hgrow` only apply to child elements within that container type
+- **GridPane vs HBox**: ColumnConstraints use `hgrow` directly, while HBox children use `HBox.hgrow` as static property
+- **Compilation vs Runtime**: FXML syntax errors typically manifest as `PropertyNotFoundException` during FXML loading
+
+### API Integration Patterns
+- Always check `apiResult.resultStatus.isError` before processing API responses
+- Use `apiResult.resultStatus.msg` (not `.message`) for error messages
+- Handle null responses and exceptional results from gRPC services
+- Status messages should provide immediate user feedback during API operations
+
+### Debugging Component Data Issues
+When tags/attributes don't appear in the database:
+
+1. **Check API calls**: Log the actual parameters being passed to `registerProvider()` and `ingestImportedData()`
+2. **Verify component injection**: Ensure ViewModel has non-null component references
+3. **Trace data flow**: Components → ViewModel API methods → DpApplication → gRPC services
+4. **Common symptoms**: Empty lists/maps in API parameters despite UI having data
+5. **Root cause**: Usually accessing `viewModel.getTags()` instead of `component.getTags()`
+
+### TabPane and Multi-View Coordination
+- Use `TabPane.getSelectionModel().select(tab)` for programmatic tab switching
+- Implement populateFromDataBlock() pattern for cross-view data transfer
+- ListView selection binding: `listView.getSelectionModel().selectedItemProperty()` for button states
+- Use shared ViewModel methods for coordinating data between tabs
+
+### Reusable UI Components
+**TagsListComponent** (`src/main/java/com/ospreydcs/dp/gui/component/TagsListComponent.java`)
+- Free-form tag entry with add/remove functionality
+- Stores tags as ObservableList<String>
+- Access data via `getTags()` method, not through parent ViewModel
+
+**AttributesListComponent** (`src/main/java/com/ospreydcs/dp/gui/component/AttributesListComponent.java`)
+- Key-value attribute entry with add/remove functionality
+- Stores attributes as "key=value" strings in ObservableList<String>
+- Access data via `getAttributes()` method, not through parent ViewModel
+- Convert to Map<String,String> using `getKeyFromAttribute()` and `getValueFromAttribute()` static methods
+
+**ProviderDetailsComponent** (`src/main/java/com/ospreydcs/dp/gui/component/ProviderDetailsComponent.java`)
+- Reusable component for Provider Details section
+- Contains provider name, description, tags, and attributes
+- Uses embedded TagsListComponent and AttributesListComponent
+- Property binding: `providerNameProperty()`, `providerDescriptionProperty()`
+- Data access: `getProviderTags()`, `getProviderAttributes()`
+- Lifecycle method: `clearProviderDetails()`
+
+**RequestDetailsComponent** (`src/main/java/com/ospreydcs/dp/gui/component/RequestDetailsComponent.java`)
+- Reusable component for Request Details section
+- Contains request tags, attributes, and event name field
+- Uses embedded TagsListComponent and AttributesListComponent
+- Property binding: `eventNameProperty()`
+- Data access: `getRequestTags()`, `getRequestAttributes()`
+- Lifecycle method: `clearRequestDetails()`
+
+**QueryPvsComponent** (`src/main/java/com/ospreydcs/dp/gui/component/QueryPvsComponent.java`)
+- Reusable component for PV list management with individual remove buttons
+- Displays current PV selection with custom ListCell containing trash can buttons (🗑️)
+- Auto-syncs with DpApplication global PV state
+- Navigation integration: "Edit Query" button to return to data-explore view
+- Used in pv-explore view for displaying and managing selected PVs
+
+**CalculationFrameDetailsDialogController** (`src/main/java/com/ospreydcs/dp/gui/component/CalculationFrameDetailsDialogController.java`)
+- Reusable dialog for displaying detailed calculation frame information
+- Shows frame name, timestamps count, data columns with sample values
+- Static factory method: `showDialog(DataFrameDetails, Stage)` for easy usage
+- Formats timestamps using proper epoch seconds/nanoseconds conversion
+- Handles all DataValue types (string, numeric, boolean) with appropriate formatting
+- Used in both data-explore Annotation Builder and annotation-explore views
+- Provides consistent calculation frame viewing experience across the application
+
+**SubscriptionDetailsComponent** (`src/main/java/com/ospreydcs/dp/gui/component/SubscriptionDetailsComponent.java`)
+- Reusable component for data event subscription management
+- Left panel: ListView displaying subscriptions with context menu removal
+- Right panel: Auto-submission form for adding PV name, trigger condition, trigger value
+- User-friendly trigger condition display ("Equal to (=)", "Greater than (>)", etc.)
+- Auto-submission on Enter/Tab key press with focus management for rapid entry
+- Context menu "Remove" option for subscription management
+- Data access: `getSubscriptions()` method following Critical Integration Pattern
+- Programmatically created to avoid FXML injection issues with custom components
+
+**Critical Integration Pattern Implementation:**
+When using reusable components, you MUST inject component references into ViewModels:
+
+```java
+// In Controller.initialize()
+viewModel.setProviderDetailsComponent(providerDetailsComponent);
+viewModel.setRequestDetailsComponent(requestDetailsComponent);
+
+// In ViewModel - add component references
+private ProviderDetailsComponent providerDetailsComponent;
+private RequestDetailsComponent requestDetailsComponent;
+
+// In API calls - get data from component instances
+var tags = providerDetailsComponent.getProviderTags();
+var attributes = providerDetailsComponent.getProviderAttributes();
+var eventName = requestDetailsComponent.getEventName();
+
+// NEVER do this - ViewModel properties stay empty
+var tags = viewModel.getTags(); // Empty!
+var attributes = viewModel.getAttributes(); // Empty!
+```
+
+**Component Binding Pattern:**
+```java
+// ✅ CORRECT - Only bind simple properties, let components manage complex data
+providerDetailsComponent.providerNameProperty().bindBidirectional(viewModel.providerNameProperty());
+// Note: Tags and attributes are managed internally by components
+
+// ❌ WRONG - Never try to populate components from ViewModel collections
+providerDetailsComponent.setProviderTags(viewModel.getProviderTags()); // Empty!
+```
+
+### Data Event Subscription Integration Pattern
+**Component Creation (Programmatic)**:
+```java
+// Avoid FXML injection issues by creating programmatically
+private void createSubscriptionDetailsComponent() {
+    subscriptionDetailsComponent = new SubscriptionDetailsComponent();
+    subscriptionDetailsPlaceholder.getChildren().add(subscriptionDetailsComponent);
+}
+```
+
+**Data Access Pattern**:
+```java
+// ✅ CORRECT - Access subscription data from component for data generation
+List<SubscribeDataEventDetail> subscriptions = subscriptionDetailsComponent.getSubscriptions();
+dpApplication.generateAndIngestData(..., subscriptions);
+
+// ✅ CORRECT - Access subscription data from component for data import
+List<SubscribeDataEventDetail> subscriptions = subscriptionDetailsComponent != null ? 
+    subscriptionDetailsComponent.getSubscriptions() : new ArrayList<>();
+dpApplication.ingestImportedData(..., new ArrayList<>(subscriptions));
+
+// ❌ WRONG - ViewModel properties remain empty
+List<SubscribeDataEventDetail> subscriptions = viewModel.getSubscriptions(); // Empty!
+```
+
+**Complete Integration Checklist**:
+1. Add FXML placeholder: `<VBox fx:id="subscriptionDetailsPlaceholder" />`
+2. Import SubscriptionDetailsComponent in Controller
+3. Add component field and placeholder field to Controller
+4. Create component programmatically in `initialize()` method
+5. Inject component reference into ViewModel
+6. Add component setter method to ViewModel
+7. Update API call methods to use component data instead of empty lists
+8. Test auto-submission form and context menu functionality
+
+### Excel Import Integration
+**Using DataImportUtility for multi-sheet Excel processing:**
+```java
+// Import Excel data with error handling
+DataImportResult importResult = DataImportUtility.importXlsxData(selectedFile.getAbsolutePath());
+if (!importResult.resultStatus.isError) {
+    List<DataFrameDetails> importedFrames = new ArrayList<>();
+    for (DataImportResult.DataFrameResult frameResult : importResult.dataFrames) {
+        DataFrameDetails frame = new DataFrameDetails(
+            frameResult.sheetName, 
+            frameResult.timestamps, 
+            frameResult.columns
+        );
+        importedFrames.add(frame);
+    }
+    // Add to UI model
+    viewModel.getCalculationsDataFrames().addAll(importedFrames);
+}
+```
+
+**Excel File Format Requirements:**
+- Column 0: Epoch seconds (long)
+- Column 1: Nanoseconds (long) 
+- Columns 2+: Data values (numeric, string, or boolean)
+- Headers in row 0 for all columns
+- Minimum 3 columns required per sheet
+
+### Auto-Submission Form Pattern
+**Implementing automatic form submission for rapid data entry:**
+```java
+// Set up auto-submission handlers in Controller
+private void setupPvFormAutoSubmission() {
+    // Auto-submit when user presses Enter in any text field
+    pvNameField.setOnAction(e -> attemptPvFormSubmission());
+    pvInitialValueField.setOnAction(e -> attemptPvFormSubmission());
+    pvMaxStepField.setOnAction(e -> attemptPvFormSubmission());
+    
+    // Auto-submit when user moves focus away from the last required field
+    pvMaxStepField.focusedProperty().addListener((obs, wasFocused, isFocused) -> {
+        if (wasFocused && !isFocused) { // Lost focus
+            attemptPvFormSubmission();
+        }
+    });
+}
+
+private void attemptPvFormSubmission() {
+    // Only auto-submit if all required fields are filled
+    if (/* all fields valid */) {
+        viewModel.addCurrentPvDetail();
+        
+        // Return focus to first field for next entry
+        if (pvNameField.getText() == null || pvNameField.getText().trim().isEmpty()) {
+            javafx.application.Platform.runLater(() -> {
+                pvNameField.requestFocus();
+            });
+        }
+    }
+}
+```
+
+**Key principles:**
+- Always-visible forms eliminate button clicks
+- Auto-submission on Enter/focus-loss reduces user actions
+- Focus management enables rapid sequential entry
+- Validation prevents invalid submissions
+
+### Custom ListCell Implementation Pattern
+**For ListViews with individual item actions (like remove buttons):**
+```java
+// Custom ListCell class
+private class PvNameListCell extends ListCell<String> {
+    private HBox content;
+    private Label itemLabel;
+    private Button actionButton;
+
+    public PvNameListCell() {
+        super();
+        content = new HBox();
+        content.setSpacing(5);
+        content.setPadding(new Insets(2, 5, 2, 5));
+        
+        itemLabel = new Label();
+        itemLabel.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(itemLabel, Priority.ALWAYS);
+        
+        actionButton = new Button("🗑️");
+        actionButton.getStyleClass().addAll("btn", "btn-danger", "btn-xs");
+        actionButton.setOnAction(e -> {
+            String item = getItem();
+            if (item != null) {
+                // Handle action
+            }
+        });
+        
+        content.getChildren().addAll(itemLabel, actionButton);
+    }
+
+    @Override
+    protected void updateItem(String item, boolean empty) {
+        super.updateItem(item, empty);
+        
+        if (empty || item == null) {
+            setGraphic(null);
+            setText(null);
+        } else {
+            itemLabel.setText(item);
+            setGraphic(content);
+            setText(null); // Important: clear default text
+        }
+    }
+}
+
+// Critical timing for cell factory setup
+private void setupCustomListCell() {
+    // Set items first
+    listView.setItems(viewModel.getItemList());
+    
+    // Then set cell factory - timing is critical!
+    javafx.application.Platform.runLater(() -> {
+        listView.setCellFactory(listView -> new PvNameListCell());
+        listView.refresh();
+        logger.debug("Custom cell factory applied");
+    });
+}
+```
+
+**Critical implementation notes:**
+- Set cell factory AFTER setting ListView items to prevent override
+- Use `Platform.runLater()` to ensure proper JavaFX thread timing
+- Call `refresh()` to force ListView to recreate cells with new factory
+- Always call `setText(null)` when using custom graphics to avoid double display
+- Apply during global state initialization when items are actually populated
+
+### Custom TableCell with Hyperlinks Pattern
+**For TableView columns with interactive hyperlinks (like PV names):**
+```java
+// Custom TableCell for hyperlink columns
+private class PvNamesTableCell extends TableCell<ProviderInfoTableRow, String> {
+    private HBox content;
+
+    public PvNamesTableCell() {
+        super();
+        content = new HBox();
+        content.setSpacing(5);
+        content.setPadding(new Insets(2, 5, 2, 5));
+    }
+
+    @Override
+    protected void updateItem(String item, boolean empty) {
+        super.updateItem(item, empty);
+        
+        if (empty || item == null || item.trim().isEmpty()) {
+            setGraphic(null);
+            setText(null);
+        } else {
+            content.getChildren().clear();
+            
+            // Get table row for individual data access
+            ProviderInfoTableRow tableRow = getTableRow().getItem();
+            if (tableRow != null) {
+                boolean first = true;
+                for (String pvName : tableRow.getPvNamesList()) {
+                    if (!first) {
+                        Label separator = new Label(", ");
+                        separator.getStyleClass().add("text-muted");
+                        content.getChildren().add(separator);
+                    }
+                    
+                    Hyperlink pvLink = new Hyperlink(pvName);
+                    pvLink.getStyleClass().addAll("hyperlink-small");
+                    pvLink.setOnAction(e -> {
+                        // Action for clicking hyperlink
+                        viewModel.addPvNameToQuery(pvName);
+                    });
+                    
+                    content.getChildren().add(pvLink);
+                    first = false;
+                }
+            }
+            
+            setGraphic(content);
+            setText(null); // Important: clear default text
+        }
+    }
+}
+
+// Apply to TableColumn
+pvNamesColumn.setCellFactory(column -> new PvNamesTableCell());
+```
+
+**Key patterns:**
+- Use `getTableRow().getItem()` to access the full row data from within TableCell
+- Handle comma separation manually for multiple hyperlinks
+- Clear default text with `setText(null)` when using custom graphics
+- Apply appropriate CSS classes for styling consistency
+
+### Cross-View Navigation with Automatic Search Pattern
+**For implementing navigation between related views with automatic search execution:**
+```java
+// 1. In source view Controller - create navigation method
+private void navigateToTargetView(String searchParameter) {
+    if (mainController != null) {
+        mainController.navigateToTargetViewWithSearch(searchParameter);
+    }
+}
+
+// 2. In MainController - add specialized navigation method
+public void navigateToTargetViewWithSearch(String searchParameter) {
+    try {
+        // Load target view
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/target-view.fxml"));
+        contentPane.getChildren().clear();
+        contentPane.getChildren().add(loader.load());
+        
+        // Inject dependencies
+        TargetViewController controller = (TargetViewController) loader.getController();
+        controller.setDpApplication(dpApplication);
+        controller.setPrimaryStage(primaryStage);
+        controller.setMainController(this);
+        controller.initializeView();
+        
+        // Execute automatic search with parameter
+        controller.executeAutomaticSearch(searchParameter);
+        
+    } catch (Exception e) {
+        logger.error("Failed to navigate with automatic search", e);
+    }
+}
+
+// 3. In target view Controller - add automatic search method
+public void executeAutomaticSearch(String searchParameter) {
+    // Pre-populate search fields
+    searchField.setText(searchParameter);
+    
+    // Clear other fields for focused search
+    otherField1.clear();
+    otherField2.clear();
+    
+    // Execute search via ViewModel
+    viewModel.executeSearch();
+}
+
+// 4. In hyperlink TableCell - call navigation with data from table row
+hyperlink.setOnAction(e -> {
+    TableRowType tableRow = getTableRow().getItem();
+    if (tableRow != null) {
+        // Use specific data from row for search parameter
+        String searchParam = tableRow.getSpecificFieldForSearch();
+        navigationMethod(searchParam);
+    }
+});
+```
+
+**Implementation Notes:**
+- Navigation preserves dependency injection patterns
+- Search parameter comes from protobuf data in table rows
+- Automatic search clears non-relevant fields for focused results
+- Error handling prevents navigation failures from breaking application state
+- Status bar provides user feedback during navigation process
+
+**Usage Examples:**
+- PV Explore → Provider Explore: Click provider name hyperlink navigates with provider ID search
+- Provider Explore → PV Explore: Could be implemented for reverse navigation
+- Dataset Builder → Data Explorer: Navigation with pre-populated PV list and time ranges
+- Dataset Explore → Dataset Builder: Click Dataset ID hyperlink navigates with automatic dataset loading
+
+### Dataset Loading Pattern
+**For implementing dataset loading from external sources into form components:**
+```java
+// 1. In ViewModel - add dataset loading method
+public void loadFromDataSet(com.ospreydcs.dp.grpc.v1.annotation.DataSet dataset) {
+    logger.debug("Loading dataset into builder: {}", dataset.getId());
+    
+    // Clear existing data first
+    resetDataset();
+    
+    // Populate form fields
+    setDatasetId(dataset.getId());
+    setDatasetName(dataset.getName());
+    setDatasetDescription(dataset.getDescription());
+    
+    // Convert protobuf DataBlocks to UI objects
+    dataBlocks.clear();
+    for (com.ospreydcs.dp.grpc.v1.annotation.DataBlock dataBlock : dataset.getDataBlocksList()) {
+        DataBlockDetail blockDetail = convertDataBlockToDetail(dataBlock);
+        dataBlocks.add(blockDetail);
+    }
+    
+    statusMessage.set("Dataset loaded: " + dataset.getName());
+}
+
+// 2. In Controller - add background loading with tab switching
+public void loadDatasetIntoBuilder(String datasetId) {
+    // Switch to target tab first
+    javafx.application.Platform.runLater(() -> {
+        tabPane.getSelectionModel().select(targetTabIndex);
+    });
+    
+    // Query dataset in background task
+    javafx.concurrent.Task<DataSetType> loadTask = new javafx.concurrent.Task<DataSetType>() {
+        @Override
+        protected DataSetType call() throws Exception {
+            ApiResult result = dpApplication.queryDataSets(datasetId, null, null, null);
+            if (result.resultStatus.isError) {
+                throw new RuntimeException(result.resultStatus.msg);
+            }
+            return result.dataSets.get(0);
+        }
+    };
+    
+    loadTask.setOnSucceeded(e -> {
+        javafx.application.Platform.runLater(() -> {
+            viewModel.loadFromDataSet(loadTask.getValue());
+        });
+    });
+    
+    Thread loadThread = new Thread(loadTask);
+    loadThread.setDaemon(true);
+    loadThread.start();
+}
+
+// 3. Protobuf to UI Object Conversion
+private DataBlockDetail convertDataBlockToDetail(DataBlock protobufDataBlock) {
+    java.time.Instant beginTime = java.time.Instant.ofEpochSecond(
+        protobufDataBlock.getBeginTime().getEpochSeconds(),
+        protobufDataBlock.getBeginTime().getNanoseconds()
+    );
+    
+    java.time.Instant endTime = java.time.Instant.ofEpochSecond(
+        protobufDataBlock.getEndTime().getEpochSeconds(),
+        protobufDataBlock.getEndTime().getNanoseconds()
+    );
+    
+    List<String> pvNames = new ArrayList<>(protobufDataBlock.getPvNamesList());
+    return new DataBlockDetail(pvNames, beginTime, endTime);
+}
+```
+
+**Key Implementation Notes:**
+- Use background tasks for API queries to prevent UI blocking
+- Switch tabs before starting background operations for immediate user feedback
+- Convert protobuf Timestamp objects to Java Instant using epoch seconds and nanoseconds
+- Always clear existing data before loading new dataset to prevent data mixing
+- Provide status feedback throughout the loading process
+- Handle API errors gracefully with user-friendly error messages
+
+### Reusable Component FXML Loading Patterns
+**Correct Component Constructor Pattern**:
+```java
+public MyComponent() {
+    // ✅ CORRECT - Load FXML and set controller, then copy properties
+    FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/fxml/components/my-component.fxml"));
+    fxmlLoader.setController(this);
+    
+    VBox root = fxmlLoader.load();
+    this.getChildren().setAll(root.getChildren());
+    this.setSpacing(root.getSpacing());
+    this.setPadding(root.getPadding());
+    this.getStyleClass().setAll(root.getStyleClass());
+}
+```
+
+**Common FXML Loading Errors**:
+- **"Root value already specified"**: Caused by using `setRoot(this)` - remove this call
+- **Type injection mismatches**: Use programmatic creation instead of `fx:include` for custom components
+- **Timing issues**: Create components before UI binding, inject after component creation

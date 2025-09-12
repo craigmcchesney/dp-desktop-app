@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import com.ospreydcs.dp.gui.component.QueryPvsComponent?>
+
+<BorderPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" 
+            fx:controller="com.ospreydcs.dp.gui.PvExploreController"
+            styleClass="container-fluid">
+   
+   <left>
+      <!-- Query PVs Component (reusable, fills left side) -->
+      <QueryPvsComponent fx:id="queryPvsComponent" 
+                         prefWidth="250" 
+                         minWidth="200" />
+   </left>
+   
+   <center>
+      <VBox spacing="10.0">
+         
+         <!-- PV Query Editor Section -->
+         <VBox spacing="10.0" styleClass="panel, panel-default">
+            <children>
+               <Label styleClass="panel-heading" text="PV Query Editor" />
+               
+               <GridPane hgap="10.0" vgap="10.0">
+                  <columnConstraints>
+                     <ColumnConstraints hgrow="NEVER" minWidth="80.0" prefWidth="80.0" />
+                     <ColumnConstraints hgrow="ALWAYS" />
+                     <ColumnConstraints hgrow="NEVER" />
+                  </columnConstraints>
+                  <rowConstraints>
+                     <RowConstraints />
+                     <RowConstraints />
+                     <RowConstraints />
+                  </rowConstraints>
+                  
+                  <!-- Search text field -->
+                  <Label text="Search:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                  <TextField fx:id="pvSearchTextField" 
+                            GridPane.columnIndex="1" GridPane.rowIndex="0" 
+                            styleClass="form-control" 
+                            promptText="Enter PV names (comma-separated) or pattern..." />
+                  <Button fx:id="searchButton" 
+                         onAction="#onSearch" 
+                         text="Search"
+                         GridPane.columnIndex="2" GridPane.rowIndex="0"
+                         styleClass="btn, btn-primary" />
+                  
+                  <!-- Radio buttons for search type -->
+                  <Label text="Mode:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                  <HBox spacing="15.0" GridPane.columnIndex="1" GridPane.rowIndex="1" GridPane.columnSpan="2">
+                     <children>
+                        <RadioButton fx:id="nameListRadio" text="PV name list" selected="true">
+                           <toggleGroup>
+                              <ToggleGroup fx:id="searchModeToggle" />
+                           </toggleGroup>
+                        </RadioButton>
+                        <RadioButton fx:id="namePatternRadio" text="PV name pattern" toggleGroup="$searchModeToggle" />
+                     </children>
+                  </HBox>
+                  
+               </GridPane>
+            </children>
+            <padding>
+               <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+            </padding>
+         </VBox>
+         
+         <!-- PV Query Results Section -->
+         <VBox spacing="10.0" styleClass="panel, panel-default" VBox.vgrow="ALWAYS">
+            <children>
+               <Label styleClass="panel-heading" text="PV Query Results" />
+               
+               <TableView fx:id="resultsTable" VBox.vgrow="ALWAYS" styleClass="table, table-striped">
+                  <columns>
+                     <TableColumn fx:id="selectColumn" prefWidth="60.0" text="Select" />
+                     <TableColumn fx:id="pvNameColumn" prefWidth="150.0" text="PV Name" />
+                     <TableColumn fx:id="providerNameColumn" prefWidth="120.0" text="Provider Name" />
+                     <TableColumn fx:id="dataTypeColumn" prefWidth="100.0" text="Data Type" />
+                     <TableColumn fx:id="timestampsTypeColumn" prefWidth="120.0" text="Timestamps Type" />
+                     <TableColumn fx:id="samplePeriodColumn" prefWidth="100.0" text="Sample Period" />
+                     <TableColumn fx:id="firstDataTimestampColumn" prefWidth="160.0" text="First Data" />
+                     <TableColumn fx:id="lastDataTimestampColumn" prefWidth="160.0" text="Last Data" />
+                     <TableColumn fx:id="numBucketsColumn" prefWidth="80.0" text="Buckets" />
+                  </columns>
+               </TableView>
+               
+               <!-- Button panel for results -->
+               <HBox spacing="10.0" alignment="CENTER_LEFT">
+                  <children>
+                     <Button fx:id="addSelectedButton" 
+                            onAction="#onAddSelected" 
+                            text="Add Selected"
+                            disable="true"
+                            styleClass="btn, btn-success" />
+                     <Label fx:id="resultsStatusLabel" 
+                           text="Enter search criteria and click Search" 
+                           styleClass="text-muted" />
+                  </children>
+               </HBox>
+               
+            </children>
+            <padding>
+               <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+            </padding>
+         </VBox>
+         
+      </VBox>
+   </center>
+   
+   <padding>
+      <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+   </padding>
+</BorderPane>

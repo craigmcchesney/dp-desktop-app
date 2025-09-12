@@ -19,25 +19,17 @@
             <Menu text="Ingest">
                <items>
                   <MenuItem fx:id="generateMenuItem" disable="true" onAction="#onGenerate" text="Generate" />
-                  <MenuItem fx:id="fixedMenuItem" disable="true" onAction="#onFixed" text="Fixed" />
-                  <MenuItem fx:id="importMenuItem" disable="true" onAction="#onImport" text="Import" />
-                  <MenuItem fx:id="subscribeMenuItem" disable="true" onAction="#onSubscribe" text="Subscribe" />
+                  <MenuItem fx:id="importMenuItem" onAction="#onImport" text="Import" />
                </items>
             </Menu>
-            <Menu text="Query">
+            <Menu text="Explore">
                <items>
                   <MenuItem fx:id="dataMenuItem" disable="true" onAction="#onData" text="Data" />
-                  <MenuItem fx:id="pvMetadataMenuItem" disable="true" onAction="#onPvMetadata" text="PV Metadata" />
-                  <MenuItem fx:id="providerMetadataMenuItem" disable="true" onAction="#onProviderMetadata" text="Provider Metadata" />
+                  <MenuItem fx:id="pvMetadataMenuItem" disable="true" onAction="#onPvMetadata" text="PVs" />
+                  <MenuItem fx:id="providerMetadataMenuItem" disable="true" onAction="#onProviderMetadata" text="Providers" />
+                  <MenuItem fx:id="datasetsMenuItem" disable="true" onAction="#onDatasets" text="Datasets" />
                   <MenuItem fx:id="annotationsMenuItem" disable="true" onAction="#onAnnotations" text="Annotations" />
-               </items>
-            </Menu>
-            <Menu text="Tools">
-               <items>
-                  <MenuItem fx:id="annotateMenuItem" disable="true" onAction="#onAnnotate" text="Annotate" />
-                  <MenuItem fx:id="exportMenuItem" disable="true" onAction="#onExport" text="Export" />
-                  <MenuItem fx:id="uploadMenuItem" disable="true" onAction="#onUpload" text="Upload" />
-                  <MenuItem fx:id="consoleMenuItem" disable="true" onAction="#onConsole" text="Console" />
+                  <MenuItem fx:id="dataEventsMenuItem" disable="true" onAction="#onDataEvents" text="Data Events" />
                </items>
             </Menu>
          </menus>
@@ -45,16 +37,7 @@
    </top>
    <center>
       <StackPane fx:id="contentPane" styleClass="container-fluid">
-         <VBox alignment="CENTER" spacing="20" styleClass="jumbotron">
-            <padding>
-               <Insets bottom="40.0" left="40.0" right="40.0" top="40.0" />
-            </padding>
-            <Label styleClass="h1" text="Data Platform Desktop Application" />
-            <Label styleClass="lead" text="Welcome to the MLDP demonstration GUI application" />
-            <Label styleClass="text-muted" text="Use the menu bar above to access application features" />
-            <Region VBox.vgrow="ALWAYS" />
-            <Label styleClass="text-info" text="Status: Ready" />
-         </VBox>
+         <!-- Content will be loaded dynamically -->
       </StackPane>
    </center>
    <bottom>
