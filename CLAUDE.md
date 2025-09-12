@@ -611,6 +611,20 @@ List<String> tags = List.copyOf(providerComponent.getProviderTags());
 - Use initialization flags to prevent listeners from firing during UI setup
 - **End Time Inclusivity**: Add nanoseconds (e.g., `.plusNanos(999_999_999)`) to end times created from `LocalTime.of()` to ensure full-second coverage in queries
 
+### JavaFX Selection Model Timing Issues
+**Problem**: ComboBox or ListView selection operations can cause `IndexOutOfBoundsException` when multiple selection models interact
+**Solution**: Defer selection operations using `Platform.runLater()` to avoid timing conflicts:
+```java
+// ❌ WRONG - Can cause IndexOutOfBoundsException in complex UIs
+comboBox.getSelectionModel().clearSelection();
+
+// ✅ CORRECT - Defer to avoid timing conflicts
+javafx.application.Platform.runLater(() -> {
+    comboBox.getSelectionModel().clearSelection();
+});
+```
+**When to use**: After actions that trigger multiple UI updates (exports, data operations, tab switches)
+
 ### FXML Layout Common Issues
 - **Static Property Syntax**: Use `hgrow="ALWAYS"` in ColumnConstraints, not `HBox.hgrow="ALWAYS"`
 - **Container-Specific Properties**: Static properties like `HBox.hgrow` only apply to child elements within that container type

@@ -1844,8 +1844,10 @@ public class DataExploreController implements Initializable {
                         break;
                 }
                 
-                // Reset ComboBox selection after action
-                datasetActionsCombo.getSelectionModel().clearSelection();
+                // Reset ComboBox selection after action - defer to avoid ListView selection issues
+                javafx.application.Platform.runLater(() -> {
+                    datasetActionsCombo.getSelectionModel().clearSelection();
+                });
             }
         });
         
