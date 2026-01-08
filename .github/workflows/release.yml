@@ -82,5 +82,4 @@ jobs:
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            files: release/dp-desktop-app-${{ env.VERSION }}.jar
+          files: release/dp-desktop-app-${{ env.VERSION }}.jar
