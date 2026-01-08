@@ -1,0 +1,49 @@
+name: Release dp-desktop-app
+
+on:
+  push:
+    tags:
+      - 'rel-*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Extract version from tag
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#rel-}"
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+
+      - name: Build shaded JAR
+        run: mvn -B -DskipTests package
+
+      - name: Verify shaded JAR exists
+        run: |
+          ls -l target
+          test -f "target/dp-desktop-app-1.12.0-shaded.jar"
+
+      - name: Prepare release artifact
+        run: |
+          mkdir -p release
+          cp target/dp-desktop-app-1.12.0-shaded.jar \
+             "release/dp-desktop-app-${VERSION}.jar"
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release/dp-desktop-app-${VERSION}.jar
